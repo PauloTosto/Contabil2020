@@ -1,0 +1,10 @@
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\bin\Release\ClassConexao.dll.config
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\bin\Release\ClassConexao.dll
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\bin\Release\ClassConexao.pdb
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\bin\Release\Newtonsoft.Json.dll
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\bin\Release\Newtonsoft.Json.xml
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\obj\Release\ClassConexao.csproj.AssemblyReference.cache
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\obj\Release\ClassConexao.csproj.CoreCompileInputs.cache
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\obj\Release\ClassConexao.csproj.CopyComplete
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\obj\Release\ClassConexao.dll
+C:\VS_2022\Contabil2020\ClassConexao\ClassConexao\obj\Release\ClassConexao.pdb
