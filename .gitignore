@@ -1,0 +1,40 @@
+﻿## Build
+bin/
+obj/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## VS Code / Rider
+.vscode/
+.idea/
+
+## Logs
+*.log
+
+## NuGet
+packages/
+*.nupkg
+
+## Publish
+publish/
+
+## Testes
+TestResults/
+
+## Arquivos temporarios
+*.tmp
+*.temp
+
+## Windows
+Thumbs.db
+Desktop.ini
+
+## Arquivos de configuracao sensiveis
+appsettings.Development.json
+appsettings.Local.json
+.env
