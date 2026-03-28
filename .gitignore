@@ -11,6 +11,13 @@ obj/
 .vs/
 packages/
 **/packages/
+
+.vs/
+*.cache
+TestResults/
+publish/
+
+
 ## VS Code / Rider
 .vscode/
 .idea/
