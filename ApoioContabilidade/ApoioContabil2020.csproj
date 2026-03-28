@@ -1,0 +1,889 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{F10AC088-66BF-4242-B4C5-A31CCA57B28C}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ApoioContabilidade</RootNamespace>
+    <AssemblyName>ApoioContabilidade</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
+    <PublishUrl>C:\APOIOCONTAB2023_V2\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ProductName>ApoioContabil2020</ProductName>
+    <PublisherName>PauloTosto</PublisherName>
+    <SuiteName>PLT</SuiteName>
+    <ApplicationRevision>148</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <OutputPath>bin\x86\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x86</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>true</GenerateManifests>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ClassApropriaçoes, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\ClassApropriaçoes\bin\Debug\ClassApropriaçoes.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.Common, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1449.0\lib\net40\Microsoft.ReportViewer.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.DataVisualization, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1449.0\lib\net40\Microsoft.ReportViewer.DataVisualization.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.Design, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1449.0\lib\net40\Microsoft.ReportViewer.Design.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.ProcessingObjectModel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1449.0\lib\net40\Microsoft.ReportViewer.ProcessingObjectModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.ReportViewer.WinForms, Version=15.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.ReportingServices.ReportViewerControl.Winforms.150.1449.0\lib\net40\Microsoft.ReportViewer.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.SqlServer.Types, Version=14.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.SqlServer.Types.14.0.314.76\lib\net40\Microsoft.SqlServer.Types.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.IO, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.IO.4.3.0\lib\net462\System.IO.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Messaging" />
+    <Reference Include="System.Net.Http, Version=4.1.1.3, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Net.Http.4.3.4\lib\net46\System.Net.Http.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.4.3.0\lib\net462\System.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Algorithms, Version=4.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Algorithms.4.3.0\lib\net463\System.Security.Cryptography.Algorithms.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Encoding, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Encoding.4.3.0\lib\net46\System.Security.Cryptography.Encoding.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Primitives, Version=4.0.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.Primitives.4.3.0\lib\net46\System.Security.Cryptography.Primitives.dll</HintPath>
+      <Private>True</Private>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.X509Certificates, Version=4.1.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Security.Cryptography.X509Certificates.4.3.0\lib\net461\System.Security.Cryptography.X509Certificates.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.ServiceModel">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Almoxarifado\ConfigComponentes\EditaAlmox.cs" />
+    <Compile Include="Almoxarifado\FormsConsulta\FrmConsulta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Almoxarifado\FormsConsulta\FrmConsulta.Designer.cs">
+      <DependentUpon>FrmConsulta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Almoxarifado\FrmRelDeposito.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Almoxarifado\FrmRelDeposito.Designer.cs">
+      <DependentUpon>FrmRelDeposito.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Almoxarifado\FrmSaidaInsumosPonto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Almoxarifado\FrmSaidaInsumosPonto.Designer.cs">
+      <DependentUpon>FrmSaidaInsumosPonto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Almoxarifado\Model\ModelosClasses.cs" />
+    <Compile Include="Almoxarifado\ServicesAlmox\MovEstStatic.cs" />
+    <Compile Include="Almoxarifado\ServicesAlmox\ServAlmox.cs" />
+    <Compile Include="Contabilidade\FrmDadosContabilidade.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Contabilidade\FrmDadosContabilidade.Designer.cs">
+      <DependentUpon>FrmDadosContabilidade.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Contabilidade\FrmTransfereContabilidade.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Contabilidade\FrmTransfereContabilidade.Designer.cs">
+      <DependentUpon>FrmTransfereContabilidade.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Core\Combination.cs" />
+    <Compile Include="Core\ControleDados.cs" />
+    <Compile Include="Core\List_DataTable.cs" />
+    <Compile Include="Core\TestaConexao.cs" />
+    <Compile Include="Excel\ExportaLoteExcel.cs" />
+    <Compile Include="Excel\ExportaSdoBalanco.cs" />
+    <Compile Include="FerramentasEditar\EdtarColunaMulti.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\EditaFin.cs" />
+    <Compile Include="Financeiro\Eventos_Fin.cs" />
+    <Compile Include="Financeiro\FrmCheques.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmCheques.Designer.cs">
+      <DependentUpon>FrmCheques.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmConciliaBB.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmConciliaBB.Designer.cs">
+      <DependentUpon>FrmConciliaBB.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmEscolhaBanco.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmEscolhaBanco.Designer.cs">
+      <DependentUpon>FrmEscolhaBanco.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmExtratos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmExtratos.Designer.cs">
+      <DependentUpon>FrmExtratos.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmFinancConsulta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmFinancConsulta.Designer.cs">
+      <DependentUpon>FrmFinancConsulta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmFinanceiro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmFinanceiro.Designer.cs">
+      <DependentUpon>FrmFinanceiro.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmFinAprop.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmFinAprop.Designer.cs">
+      <DependentUpon>FrmFinAprop.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\FrmTarifasLancAutoBB.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro\FrmTarifasLancAutoBB.Designer.cs">
+      <DependentUpon>FrmTarifasLancAutoBB.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro\Imprimir\ChequeImprime.cs" />
+    <Compile Include="Financeiro\Imprimir\ChequeImprimeFolha.cs" />
+    <Compile Include="Financeiro\Imprimir\PlanilhaFinanceiraImprime.cs" />
+    <Compile Include="Financeiro\Imprimir\ReciboImprime.cs" />
+    <Compile Include="Financeiro\Models\FinApropExtendida.cs" />
+    <Compile Include="Financeiro\Models\ImprimeModels.cs" />
+    <Compile Include="Financeiro\Models\ModelComboBoxSource.cs" />
+    <Compile Include="Financeiro\Models\WindowsApiImpressaocs.cs" />
+    <Compile Include="Financeiro\Services\ServiceConcilia.cs" />
+    <Compile Include="Financeiro_MOVFIN\EdtFinDBF.cs" />
+    <Compile Include="Financeiro_MOVFIN\EventosDBF_Fin.cs" />
+    <Compile Include="Financeiro_MOVFIN\FrmFinanc_MOVFINConsulta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro_MOVFIN\FrmFinanc_MOVFINConsulta.Designer.cs">
+      <DependentUpon>FrmFinanc_MOVFINConsulta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro_MOVFIN\FrmFinan_MOVFIN.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Financeiro_MOVFIN\FrmFinan_MOVFIN.Designer.cs">
+      <DependentUpon>FrmFinan_MOVFIN.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Financeiro_MOVFIN\Servicos\ServicosFiltroDBF.cs" />
+    <Compile Include="FinVauche_MOVFIN\EdtVauchesDBF.cs" />
+    <Compile Include="FinVauche_MOVFIN\EventosDBF_Vauches.cs" />
+    <Compile Include="FinVauche_MOVFIN\FrmFinVauche_MOVFIN.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FinVauche_MOVFIN\FrmFinVauche_MOVFIN.Designer.cs">
+      <DependentUpon>FrmFinVauche_MOVFIN.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FinVauche_MOVFIN\Servicos\ServicosFiltroVauchesDBF.cs" />
+    <Compile Include="Fiscal\ACBR\Cancelamento.cs" />
+    <Compile Include="Fiscal\ACBR\Enum_Fiscais.cs" />
+    <Compile Include="Fiscal\ACBR\FiscalACBR.cs" />
+    <Compile Include="Fiscal\Comum\Configura_XML_NF.cs" />
+    <Compile Include="Fiscal\Filtros\FrmFiltroBasico.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Fiscal\Filtros\FrmFiltroBasico.designer.cs">
+      <DependentUpon>FrmFiltroBasico.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Fiscal\FrmCaminhoXML.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Fiscal\FrmCaminhoXML.Designer.cs">
+      <DependentUpon>FrmCaminhoXML.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Fiscal\FrmFiscal_Novo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Fiscal\FrmFiscal_Novo.designer.cs">
+      <DependentUpon>FrmFiscal_Novo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Fiscal\FrmRecarregueDisponivel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Fiscal\FrmRecarregueDisponivel.designer.cs">
+      <DependentUpon>FrmRecarregueDisponivel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Fiscal\Model\ModelosFiscais.cs" />
+    <Compile Include="Fiscal\Servicos\CargaNFe.cs" />
+    <Compile Include="Fiscal\Servicos\ManejoDados.cs" />
+    <Compile Include="Fiscal\Servicos\RecarregueManejoDados.cs" />
+    <Compile Include="FrmGravaMovFinNoServidor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmGravaMovFinNoServidor.Designer.cs">
+      <DependentUpon>FrmGravaMovFinNoServidor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Services\TabelasIniciaisDBF.cs" />
+    <Compile Include="Trabalho\ExcelRange.cs" />
+    <Compile Include="Trabalho\FrmPontoMes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmPontoMes.Designer.cs">
+      <DependentUpon>FrmPontoMes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmBalancete.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmBalancete.Designer.cs">
+      <DependentUpon>FrmBalancete.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmBalancinho.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmBalancinho.Designer.cs">
+      <DependentUpon>FrmBalancinho.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmEdicaoMOVFIN.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmEdicaoMOVFIN.Designer.cs">
+      <DependentUpon>FrmEdicaoMOVFIN.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmEdicaoPTMovFin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmEdicaoPTMovFin.Designer.cs">
+      <DependentUpon>FrmEdicaoPTMovFin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmPadraoOk.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmPadraoOk.Designer.cs">
+      <DependentUpon>FrmPadraoOk.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmPlaconRelaciona.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmPlaconRelaciona.Designer.cs">
+      <DependentUpon>FrmPlaconRelaciona.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmRazao.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmRazao.Designer.cs">
+      <DependentUpon>FrmRazao.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmRelaciona.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmRelaciona.Designer.cs">
+      <DependentUpon>FrmRelaciona.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmSdoPlano.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmSdoPlano.Designer.cs">
+      <DependentUpon>FrmSdoPlano.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmErros.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmErros.Designer.cs">
+      <DependentUpon>FrmErros.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmFiltro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmFiltro.designer.cs">
+      <DependentUpon>FrmFiltro.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmFinan2.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmFinan2.Designer.cs">
+      <DependentUpon>FrmFinan2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmFinVauche.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmFinVauche.Designer.cs">
+      <DependentUpon>FrmFinVauche.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmMenu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmMenu.Designer.cs">
+      <DependentUpon>FrmMenu.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmPreparaPlacon1.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmPreparaPlacon1.Designer.cs">
+      <DependentUpon>FrmPreparaPlacon1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrmWinConfigura.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmWinConfigura.Designer.cs">
+      <DependentUpon>FrmWinConfigura.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Models\Relaciona.cs" />
+    <Compile Include="myProxy.cs" />
+    <Compile Include="PagarReceber\EditaPgRc.cs" />
+    <Compile Include="PagarReceber\Eventos_PgRc.cs" />
+    <Compile Include="Produção\AltereLote.cs" />
+    <Compile Include="Produção\EditaProduto.cs" />
+    <Compile Include="Produção\Eventos_Produto.cs" />
+    <Compile Include="Produção\FrmFiltroProd.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Produção\FrmFiltroProd.Designer.cs">
+      <DependentUpon>FrmFiltroProd.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Produção\FrmProd.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Produção\FrmProd.Designer.cs">
+      <DependentUpon>FrmProd.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Services\FerramentasPesquisa.cs" />
+    <Compile Include="PagarReceber\ServicosFiltro.cs" />
+    <Compile Include="PagarReceber\FrmConsultaPagarReceber.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PagarReceber\FrmConsultaPagarReceber.Designer.cs">
+      <DependentUpon>FrmConsultaPagarReceber.cs</DependentUpon>
+    </Compile>
+    <Compile Include="PagarReceber\FrmPagarReceber.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PagarReceber\FrmPagarReceber.Designer.cs">
+      <DependentUpon>FrmPagarReceber.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\SqlServer_VFP_Config.cs" />
+    <Compile Include="SqlServerTypes\Loader.cs" />
+    <Compile Include="Trabalho\ConfigComponentes\EditaCltPonto.cs" />
+    <Compile Include="Trabalho\Edita_Cad.cs" />
+    <Compile Include="Trabalho\Eventos_Cad.cs" />
+    <Compile Include="Trabalho\Ferias\FrmFerias.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\Ferias\FrmFerias.Designer.cs">
+      <DependentUpon>FrmFerias.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\Ferias\FrmFeriasConsulta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\Ferias\FrmFeriasConsulta.Designer.cs">
+      <DependentUpon>FrmFeriasConsulta.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmCltFamilia.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmCltFamilia.Designer.cs">
+      <DependentUpon>FrmCltFamilia.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmCltReajuste.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmCltReajuste.Designer.cs">
+      <DependentUpon>FrmCltReajuste.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmCltSefip.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmCltSefip.Designer.cs">
+      <DependentUpon>FrmCltSefip.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmPesqFolha.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmPesqFolha.Designer.cs">
+      <DependentUpon>FrmPesqFolha.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FormsPesquisa\FrmPesquisaCkList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FormsPesquisa\FrmPesquisaCkList.Designer.cs">
+      <DependentUpon>FrmPesquisaCkList.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FrmCadastro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmCadastro.Designer.cs">
+      <DependentUpon>FrmCadastro.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FrmCltPonto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmCltPonto.Designer.cs">
+      <DependentUpon>FrmCltPonto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FrmConsultaTrab.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmConsultaTrab.Designer.cs">
+      <DependentUpon>FrmConsultaTrab.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FrmRelTrabalhista.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmRelTrabalhista.Designer.cs">
+      <DependentUpon>FrmRelTrabalhista.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\Imprimir\FolhaImp.cs" />
+    <Compile Include="Trabalho\Models\ModelsTrabalho.cs" />
+    <Compile Include="Trabalho\PegDadosCltCad\FrmEscolhaTrab.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\PegDadosCltCad\FrmEscolhaTrab.Designer.cs">
+      <DependentUpon>FrmEscolhaTrab.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\ServicesTrab\AtualizaFolha.cs" />
+    <Compile Include="Trabalho\ServicesTrab\ServCltPonto.cs" />
+    <Compile Include="Trabalho\ServicesTrab\ServicoFiltroTrab.cs" />
+    <Compile Include="Trabalho\ServicesTrab\Utilities.cs" />
+    <Compile Include="UserControls\ComboBoxMD3.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\ComboBoxMD3.Designer.cs">
+      <DependentUpon>ComboBoxMD3.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\ComboMDInverte.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\ComboMDInverte.Designer.cs">
+      <DependentUpon>ComboMDInverte.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmRazaoContabil.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmRazaoContabil.Designer.cs">
+      <DependentUpon>FrmRazaoContabil.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmRazaoContabilGeral.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ZContabAlterData\FrmRazaoContabilGeral.Designer.cs">
+      <DependentUpon>FrmRazaoContabilGeral.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ZContabAlterData\Utils\BalanceteClass.cs" />
+    <Compile Include="ZContabAlterData\Utils\ProcComuns.cs" />
+    <EmbeddedResource Include="Almoxarifado\FormsConsulta\FrmConsulta.resx">
+      <DependentUpon>FrmConsulta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Almoxarifado\FrmRelDeposito.resx">
+      <DependentUpon>FrmRelDeposito.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Almoxarifado\FrmSaidaInsumosPonto.resx">
+      <DependentUpon>FrmSaidaInsumosPonto.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Contabilidade\FrmDadosContabilidade.resx">
+      <DependentUpon>FrmDadosContabilidade.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Contabilidade\FrmTransfereContabilidade.resx">
+      <DependentUpon>FrmTransfereContabilidade.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FerramentasEditar\EdtarColunaMulti.resx">
+      <DependentUpon>EdtarColunaMulti.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmCheques.resx">
+      <DependentUpon>FrmCheques.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmConciliaBB.resx">
+      <DependentUpon>FrmConciliaBB.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmEscolhaBanco.resx">
+      <DependentUpon>FrmEscolhaBanco.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmExtratos.resx">
+      <DependentUpon>FrmExtratos.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmFinancConsulta.resx">
+      <DependentUpon>FrmFinancConsulta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmFinanceiro.resx">
+      <DependentUpon>FrmFinanceiro.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmFinAprop.resx">
+      <DependentUpon>FrmFinAprop.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro\FrmTarifasLancAutoBB.resx">
+      <DependentUpon>FrmTarifasLancAutoBB.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro_MOVFIN\FrmFinanc_MOVFINConsulta.resx">
+      <DependentUpon>FrmFinanc_MOVFINConsulta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Financeiro_MOVFIN\FrmFinan_MOVFIN.resx">
+      <DependentUpon>FrmFinan_MOVFIN.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FinVauche_MOVFIN\FrmFinVauche_MOVFIN.resx">
+      <DependentUpon>FrmFinVauche_MOVFIN.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fiscal\Filtros\FrmFiltroBasico.resx">
+      <DependentUpon>FrmFiltroBasico.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fiscal\FrmCaminhoXML.resx">
+      <DependentUpon>FrmCaminhoXML.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fiscal\FrmFiscal_Novo.resx">
+      <DependentUpon>FrmFiscal_Novo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Fiscal\FrmRecarregueDisponivel.resx">
+      <DependentUpon>FrmRecarregueDisponivel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmGravaMovFinNoServidor.resx">
+      <DependentUpon>FrmGravaMovFinNoServidor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmSdoPlano.resx">
+      <DependentUpon>FrmSdoPlano.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FrmPontoMes.resx">
+      <DependentUpon>FrmPontoMes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmBalancete.resx">
+      <DependentUpon>FrmBalancete.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmBalancinho.resx">
+      <DependentUpon>FrmBalancinho.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmEdicaoPTMovFin.resx">
+      <DependentUpon>FrmEdicaoPTMovFin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmErros.resx">
+      <DependentUpon>FrmErros.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmFiltro.resx">
+      <DependentUpon>FrmFiltro.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmFinan2.resx">
+      <DependentUpon>FrmFinan2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmFinVauche.resx">
+      <DependentUpon>FrmFinVauche.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmMenu.resx">
+      <DependentUpon>FrmMenu.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmPadraoOk.resx">
+      <DependentUpon>FrmPadraoOk.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmPlaconRelaciona.resx">
+      <DependentUpon>FrmPlaconRelaciona.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmPreparaPlacon1.resx">
+      <DependentUpon>FrmPreparaPlacon1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmRazao.resx">
+      <DependentUpon>FrmRazao.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmRelaciona.resx">
+      <DependentUpon>FrmRelaciona.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrmWinConfigura.resx">
+      <DependentUpon>FrmWinConfigura.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PagarReceber\FrmConsultaPagarReceber.resx">
+      <DependentUpon>FrmConsultaPagarReceber.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PagarReceber\FrmPagarReceber.resx">
+      <DependentUpon>FrmPagarReceber.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Produção\FrmFiltroProd.resx">
+      <DependentUpon>FrmFiltroProd.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Produção\FrmProd.resx">
+      <DependentUpon>FrmProd.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="Trabalho\Ferias\FrmFerias.resx">
+      <DependentUpon>FrmFerias.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\Ferias\FrmFeriasConsulta.resx">
+      <DependentUpon>FrmFeriasConsulta.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FormsAuxiliar\FrmCltFamilia.resx">
+      <DependentUpon>FrmCltFamilia.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FormsAuxiliar\FrmCltReajuste.resx">
+      <DependentUpon>FrmCltReajuste.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FormsAuxiliar\FrmCltSefip.resx">
+      <DependentUpon>FrmCltSefip.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FormsAuxiliar\FrmPesqFolha.resx">
+      <DependentUpon>FrmPesqFolha.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FormsPesquisa\FrmPesquisaCkList.resx">
+      <DependentUpon>FrmPesquisaCkList.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FrmCadastro.resx">
+      <DependentUpon>FrmCadastro.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FrmCltPonto.resx">
+      <DependentUpon>FrmCltPonto.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FrmConsultaTrab.resx">
+      <DependentUpon>FrmConsultaTrab.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\FrmRelTrabalhista.resx">
+      <DependentUpon>FrmRelTrabalhista.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Trabalho\PegDadosCltCad\FrmEscolhaTrab.resx">
+      <DependentUpon>FrmEscolhaTrab.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\ComboBoxMD3.resx">
+      <DependentUpon>ComboBoxMD3.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\ComboMDInverte.resx">
+      <DependentUpon>ComboMDInverte.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmRazaoContabil.resx">
+      <DependentUpon>FrmRazaoContabil.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ZContabAlterData\FrmRazaoContabilGeral.resx">
+      <DependentUpon>FrmRazaoContabilGeral.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="app.config" />
+    <None Include="Fontes\bauhaus-medium-bt.ttf" />
+    <None Include="packages.config" />
+    <None Include="Properties\DataSources\ApoioContabilidade.Trabalho.DataSet1.datasource" />
+    <None Include="Properties\DataSources\ApoioContabilidade.Trabalho.FrmRelTrabalhista.datasource" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="Services\FindDiretorios.cs" />
+    <Compile Include="Services\ServicosApi.cs" />
+    <Compile Include="Services\TabelasIniciais.cs" />
+    <Compile Include="TDataControlContab.cs" />
+    <Compile Include="TDataTabelasFinanceiras.cs" />
+    <None Include="Trabalho\Padrao_Excel\Modelo recibo de pagamento de salario.xls" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.2.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 2.0 %28x86%29</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.0">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.0 %28x86%29</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\DataSources\System.Data.DataSet.datasource" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ClassConexao\ClassConexao\ClassConexao.csproj">
+      <Project>{146b03d2-3238-451a-bd02-d7786d6b38e4}</Project>
+      <Name>ClassConexao</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ClassFiltroEdite\ClassFiltroEdite\ClassFiltroEdite\ClassFiltroEdite.csproj">
+      <Project>{c4f50f53-8f08-4a5e-b727-4ee84ef0d01f}</Project>
+      <Name>ClassFiltroEdite</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\ClassLibTrabalho\ClassLibTrabalho\ClassLibTrabalho.csproj">
+      <Project>{24f60b63-24bc-42e3-82eb-25e12b48c8fc}</Project>
+      <Name>ClassLibTrabalho</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="VFPOLEDBLib">
+      <Guid>{50BAEECA-ED25-11D2-B97B-000000000000}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Produção\Servicos\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Imagens\ImagemMLSA_Jadyr.jpeg" />
+    <Content Include="Imagens\ImagemMLSA_Reduzida.png" />
+    <Content Include="Imagens\ImagemMLSA_reduzida2.png" />
+    <Content Include="Imagens\ImagemMLSA_reduzida3.png" />
+    <Content Include="Imagens\M Libanio - logotipo.JPG" />
+    <Content Include="Imagens\ImagemMLSA_LOGOTIPO_AJADYR.jpeg" />
+    <Content Include="Imagens\ImagemMLSA_LOGOTIPO2_AJADYR.jpeg" />
+    <Content Include="SqlServerTypes\readme.htm" />
+    <Content Include="SqlServerTypes\x64\msvcr120.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SqlServerTypes\x64\SqlServerSpatial140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SqlServerTypes\x86\msvcr120.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="SqlServerTypes\x86\SqlServerSpatial140.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.21022</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{C4F50F53-8F08-4A5E-B727-4EE84EF0D01F}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>ClassFiltroEdite</RootNamespace>
+    <AssemblyName>ClassFiltroEdite</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Office.Interop.Excel, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Microsoft.Office.Interop.Excel.15.0.4795.1000\lib\net20\Microsoft.Office.Interop.Excel.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ApoioFiltro.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ClassFiltroEditeResource.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ClassFiltroEditeResource.resx</DependentUpon>
+    </Compile>
+    <Compile Include="EditaForm.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Linha.cs">
+    </Compile>
+    <Compile Include="ListBoxForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Miscelania.cs" />
+    <Compile Include="MonteGrid.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UserControls\ComboBoxMD2.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\ComboBoxMD2.designer.cs">
+      <DependentUpon>ComboBoxMD2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\ComboMDGlebaSetor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\ComboMDGlebaSetor.Designer.cs">
+      <DependentUpon>ComboMDGlebaSetor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\ComboMDInverte2.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\ComboMDInverte2.designer.cs">
+      <DependentUpon>ComboMDInverte2.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UserControls\ComboMDInverte3.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UserControls\ComboMDInverte3.Designer.cs">
+      <DependentUpon>ComboMDInverte3.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ApoioFiltro.resx">
+      <DependentUpon>ApoioFiltro.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ClassFiltroEditeResource.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ClassFiltroEditeResource.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ListBoxForm.resx">
+      <DependentUpon>ListBoxForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\ComboMDGlebaSetor.resx">
+      <DependentUpon>ComboMDGlebaSetor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\ComboMDInverte2.resx">
+      <DependentUpon>ComboMDInverte2.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UserControls\ComboMDInverte3.resx">
+      <DependentUpon>ComboMDInverte3.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+    <None Include="Resources\cancelaStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\codigosStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\copyToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\cutToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\deletaStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\helpToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\newToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\pasteToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\printToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\saveToolStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\servicoStripButton.Image.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\sairToolStripButton_Image.bmp" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
