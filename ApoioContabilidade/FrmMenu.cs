@@ -206,12 +206,6 @@ namespace ApoioContabilidade
             oform.Show();
         }
 
-        private void relacionaPlaconXAlterDataToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            FrmPlaconRelaciona oform = new FrmPlaconRelaciona();
-            oform.Show();
-        }
-
         private void pagarEReceberToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FrmConsultaPagarReceber oform = new FrmConsultaPagarReceber();

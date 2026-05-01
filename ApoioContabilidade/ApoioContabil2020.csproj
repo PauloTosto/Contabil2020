@@ -358,12 +358,6 @@
     <Compile Include="ZContabAlterData\FrmBalancinho.Designer.cs">
       <DependentUpon>FrmBalancinho.cs</DependentUpon>
     </Compile>
-    <Compile Include="ZContabAlterData\FrmEdicaoMOVFIN.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ZContabAlterData\FrmEdicaoMOVFIN.Designer.cs">
-      <DependentUpon>FrmEdicaoMOVFIN.cs</DependentUpon>
-    </Compile>
     <Compile Include="ZContabAlterData\FrmEdicaoPTMovFin.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -375,12 +369,6 @@
     </Compile>
     <Compile Include="FrmPadraoOk.Designer.cs">
       <DependentUpon>FrmPadraoOk.cs</DependentUpon>
-    </Compile>
-    <Compile Include="FrmPlaconRelaciona.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="FrmPlaconRelaciona.Designer.cs">
-      <DependentUpon>FrmPlaconRelaciona.cs</DependentUpon>
     </Compile>
     <Compile Include="FrmRazao.cs">
       <SubType>Form</SubType>
@@ -684,9 +672,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FrmPadraoOk.resx">
       <DependentUpon>FrmPadraoOk.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="FrmPlaconRelaciona.resx">
-      <DependentUpon>FrmPlaconRelaciona.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FrmPreparaPlacon1.resx">
       <DependentUpon>FrmPreparaPlacon1.cs</DependentUpon>

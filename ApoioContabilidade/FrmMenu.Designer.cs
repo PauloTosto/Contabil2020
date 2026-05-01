@@ -50,7 +50,6 @@
             this.editaMOVFINToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.financeiroMOVFINToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cadastroDeContasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.relacionaPlaconXAlterDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.trabalhoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.cLTPONTOToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -244,23 +243,14 @@
             this.financeiroMOVFINToolStripMenuItem.Size = new System.Drawing.Size(361, 26);
             this.financeiroMOVFINToolStripMenuItem.Text = "Financeiro[DBF]";
             this.financeiroMOVFINToolStripMenuItem.Click += new System.EventHandler(this.financeiroMOVFINToolStripMenuItem_Click);
-            // 
+            //
             // cadastroDeContasToolStripMenuItem
-            // 
-            this.cadastroDeContasToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.relacionaPlaconXAlterDataToolStripMenuItem});
+            //
             this.cadastroDeContasToolStripMenuItem.Name = "cadastroDeContasToolStripMenuItem";
             this.cadastroDeContasToolStripMenuItem.Size = new System.Drawing.Size(152, 24);
             this.cadastroDeContasToolStripMenuItem.Text = "Cadastro de Contas";
             this.cadastroDeContasToolStripMenuItem.Visible = false;
-            // 
-            // relacionaPlaconXAlterDataToolStripMenuItem
-            // 
-            this.relacionaPlaconXAlterDataToolStripMenuItem.Name = "relacionaPlaconXAlterDataToolStripMenuItem";
-            this.relacionaPlaconXAlterDataToolStripMenuItem.Size = new System.Drawing.Size(294, 26);
-            this.relacionaPlaconXAlterDataToolStripMenuItem.Text = "Relaciona (Placon x AlterData)";
-            this.relacionaPlaconXAlterDataToolStripMenuItem.Click += new System.EventHandler(this.relacionaPlaconXAlterDataToolStripMenuItem_Click);
-            // 
+            //
             // trabalhoToolStripMenuItem
             // 
             this.trabalhoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -382,7 +372,6 @@
         private System.Windows.Forms.ToolStripMenuItem sairToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editaPTMOVFINanoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cadastroDeContasToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem relacionaPlaconXAlterDataToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem apiFinanceiroMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pagarEReceberToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;

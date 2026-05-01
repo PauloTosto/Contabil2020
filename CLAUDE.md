@@ -125,8 +125,8 @@ Outros projetos consomem a mesma API — **não mudar contrato sem coordenar com
 
 ## Forms desligados / em desuso
 
-- `FrmEdicaoMOVFIN` — experiência abandonada de editar DBF pelo app. Confirmado pelo dono do código.
-- `FrmPlaconRelaciona.btnImporta_Click` — corpo está **inteiramente comentado** ([FrmPlaconRelaciona.cs:52](ApoioContabilidade/FrmPlaconRelaciona.cs:52)). A versão funcional do mesmo botão está em `FrmRelaciona.btnImporta_Click` ([FrmRelaciona.cs:709](ApoioContabilidade/FrmRelaciona.cs:709)).
+- O caminho de import de `RELACIONA.DBF` é exclusivamente via `FrmRelaciona.btnImporta_Click` ([FrmRelaciona.cs](ApoioContabilidade/FrmRelaciona.cs)) — abrir o Excel com a planilha `PESQUISA` dentro.
+- O submenu **Cadastro de Contas** (`cadastroDeContasToolStripMenuItem`) está vazio e com `Visible=false` desde a remoção do `FrmPlaconRelaciona`. Pode ser removido em limpeza futura.
 
 ## Build
 
