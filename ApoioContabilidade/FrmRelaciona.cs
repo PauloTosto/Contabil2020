@@ -608,11 +608,34 @@ namespace ApoioContabilidade
 
         private void btnExporta_Click(object sender, EventArgs e)
         {
+            if (VauchesRazao == null || VauchesRazao.Rows.Count == 0)
+            {
+                MessageBox.Show("Sem registros para exportar. Execute uma pesquisa primeiro.");
+                return;
+            }
+
             if (!rbDesc2.Checked)
             {
                 bool naoePadrao = (MessageBox.Show("O Padrão é exportar com Codigo REDUZIDO.Exporta Assim Mesmo?", "Responda", MessageBoxButtons.OKCancel) == DialogResult.OK);
                 if (!naoePadrao) return;
             }
+
+            // Bloqueia export quando há lançamentos sem mapeamento em RELACIONA.DBF (DEBITO ou CREDITO == "-1").
+            // Só ocorre nos modos REDUZIDO/Contabilidade — no modo NUMCONTA o código original é mantido.
+            if (rbDesc2.Checked || rbContabilidade.Checked)
+            {
+                int semMapeamento = VauchesRazao.AsEnumerable()
+                    .Count(r => r.Field<string>("DEBITO") == "-1" || r.Field<string>("CREDITO") == "-1");
+                if (semMapeamento > 0)
+                {
+                    MessageBox.Show(
+                        semMapeamento + " lançamento(s) sem mapeamento em RELACIONA.DBF. " +
+                        "Use 'Contas Únicas' para identificar e atualize RELACIONA antes de exportar.",
+                        "Export bloqueado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
             Cursor.Current = Cursors.WaitCursor;
             ExportaLoteExcel.ExportaExcelLote(VauchesRazao);
             Cursor.Current = Cursors.Default;
@@ -1412,6 +1435,25 @@ namespace ApoioContabilidade
                 return false;
             }*/
 
+            // Valida NUMCONTA único antes de sobrescrever RELACIONA.DBF.
+            // Sem essa proteção, duplicatas só são detectadas depois em PesquiseRazao (RELACIONA.DBF tem NUMCONTA DUPLICADO).
+            List<string> duplicadasNumconta = tabexcel.AsEnumerable()
+                .Where(r => !r.IsNull("NUMCONTA") && Convert.ToString(r["NUMCONTA"]).Trim() != "")
+                .GroupBy(r => Convert.ToString(r["NUMCONTA"]).Trim().ToUpper())
+                .Where(g => g.Count() > 1)
+                .Select(g => g.Key)
+                .ToList();
+            if (duplicadasNumconta.Count > 0)
+            {
+                string lista = string.Join(", ", duplicadasNumconta.Take(10));
+                if (duplicadasNumconta.Count > 10) lista += " ... (+" + (duplicadasNumconta.Count - 10) + ")";
+                MessageBox.Show(
+                    "NUMCONTA duplicado na planilha Excel. Corrija antes de importar:\n" + lista,
+                    "Duplicatas em RELACIONA",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return result;
+            }
+
             result = true;
             try
             {
@@ -1468,12 +1510,11 @@ namespace ApoioContabilidade
             }
             catch (Exception E)
             {
+                MessageBox.Show("Erro ao gravar RELACIONA.DBF: " + E.Message);
                 result = false;
-
-
             }
 
-            return true;
+            return result;
         }
 
 

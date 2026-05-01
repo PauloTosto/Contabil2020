@@ -55,14 +55,20 @@ namespace ApoioContabilidade.Contabilidade
                 catch (Exception)
                 {
                 }
-                if (dsResult != null)
+                // ApiServices retorna DataSet vazio tanto em erro quanto em consulta sem registros.
+                // Em erro, o próprio ApiServices já mostra "Erro Acesso Servidor".
+                if (dsResult != null && dsResult.Tables.Count > 0 && dsResult.Tables[0].Rows.Count > 0)
                 {
-                    if (dsResult.Tables.Count > 0)
-                    {
-                        movInsere = dsResult.Tables[0];
-                        dataGridView1.DataSource = movInsere;
-                        dataGridView1.DefaultCellStyle.ForeColor = Color.Blue;
-                    }
+                    movInsere = dsResult.Tables[0];
+                    dataGridView1.DataSource = movInsere;
+                    dataGridView1.DefaultCellStyle.ForeColor = Color.Blue;
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Não foram retornados dados. Se houve erro de comunicação, verifique a conexão antes de prosseguir.",
+                        "Sem dados", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
                 }
             }
             else if (rbDeletarRegistros.Checked)

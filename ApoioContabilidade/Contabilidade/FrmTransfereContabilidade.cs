@@ -113,7 +113,10 @@ namespace ApoioContabilidade.Contabilidade
             catch (Exception)
             {
             }
-            if (dsResult != null)
+            // ApiServices retorna DataSet vazio (Tables.Count == 0) tanto em erro de comunicação quanto em consulta sem dados.
+            // Em erro, o próprio ApiServices já mostra "Erro Acesso Servidor" antes daqui.
+            bool temDados = dsResult != null && dsResult.Tables.Count > 0;
+            if (temDados)
             {
                 int ordem = 0;
                 foreach (DataTable table in dsResult.Tables)
@@ -123,7 +126,7 @@ namespace ApoioContabilidade.Contabilidade
                         dsInsumos.Tables.Add(table.Copy());
                         dsInsumos.Tables[dsInsumos.Tables.Count - 1].TableName = "Insumos" + dsInsumos.Tables.Count.ToString();
                     }
-                    else if (ordem == 0) // modelo antigo 
+                    else if (ordem == 0) // modelo antigo
                     {
                         dsFolhas.Tables.Add(table.Copy());
                         dsFolhas.Tables[dsFolhas.Tables.Count - 1].TableName = "Folhas" + dsFolhas.Tables.Count.ToString();
@@ -137,11 +140,13 @@ namespace ApoioContabilidade.Contabilidade
             }
             else
             {
-                MessageBox.Show("Sem Resultados");
+                MessageBox.Show(
+                    "Não foram retornados dados. Se houve erro de comunicação, verifique a conexão antes de tentar transferir.",
+                    "Sem dados", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
             btnConsulta.Enabled = false;
-            btnTransfere.Enabled = true;
+            btnTransfere.Enabled = temDados;
         }
         private void MonteGrids()
         {
