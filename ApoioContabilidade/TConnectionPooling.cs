@@ -8,7 +8,6 @@ using System.Data.Odbc;
 using System.Data.OleDb;
 using System.Data.SqlClient;
 using System.IO;
-using FirebirdSql.Data.Firebird;
 
 
 namespace ApoioContabilidade
@@ -25,9 +24,8 @@ namespace ApoioContabilidade
             CurrentDiretorio = CurrentDiretorio + "/"; 
         } 
 
-       private    
+       private
        OdbcConnection FOdbcConnection,FParadoxOdbcConnection,FExcelOdbcConnection;
-       FbConnection FFbConnection;
        SqlConnection FSqlConnection;
        OleDbConnection FOleDbConnection;
 
@@ -87,21 +85,6 @@ namespace ApoioContabilidade
 
         }
 
-        void ActiveConnectionFb()
-        {
-           string confb, nome_servidor,bancoplantas;
-           bancoplantas = FbBancoPlantasPathInfo;
-
-           if (bancoplantas == "")  bancoplantas = "BANCOPLANTAS";
-           nome_servidor = FireBirdPathInfo;
-           if (nome_servidor == "")   nome_servidor = "Servidor";
-
-            confb = "User=SYSDBA;Password=masterkey;Database="+bancoplantas+";DataSource="+nome_servidor+";Port=3050;Dialect=3;"+
-                "Charset=WIN1252;Role=;Connection lifetime=0;Connection timeout=15;Pooling=True;Packet Size=8192;Server Type=0";
-
-            FFbConnection =  new FbConnection(confb);
-
-        }
         void ActiveConnectionSql()
         {
            // string consql;
@@ -185,12 +168,6 @@ namespace ApoioContabilidade
             return FExcelOdbcConnection;
         }
 
-        FbConnection GetConnectionFb()
-        {
-            if (FFbConnection == null)
-                ActiveConnectionFb();
-            return FFbConnection;
-        }
        public SqlConnection GetConnectionSql()
         {
             if (FSqlConnection == null)
@@ -217,23 +194,12 @@ namespace ApoioContabilidade
         {
             get { return InformaPathInfo("PATHEXCEL="); }
         }
-      //public string ExcelNETPathInfo 
+      //public string ExcelNETPathInfo
        // {
         //    get {return Get_ExcelNETPathInfo();}
         //}
 
-      public string FireBirdPathInfo
-      {
-          get { return InformaPathInfo("SERVIDOR="); }
-      }
-
-      public string FbBancoPlantasPathInfo
-      {
-          get { return InformaPathInfo("BANCOPLANTAS="); }
-      }
-
-
-      public StringCollection Computadores 
+      public StringCollection Computadores
         {
             get
             {

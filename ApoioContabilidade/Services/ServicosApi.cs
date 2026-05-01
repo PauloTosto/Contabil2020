@@ -18,6 +18,8 @@ namespace ApoioContabilidade.Models
 {
     public static class ApiServices
     {
+        private static readonly HttpClient _httpClient = new HttpClient();
+
         public static async Task<DataSet> Api_QueryMulti(List<String> sqlStrings)
         {
             DataSet odataset = new DataSet();
@@ -48,21 +50,13 @@ namespace ApoioContabilidade.Models
             // url = "http://" + host + ":5000/api/SelectML/CSharp?query=" + queryGeral;
             try
             {
-
-
-                using (var client = new HttpClient())
+                using (var response = await _httpClient.GetAsync(url))
                 {
-
-                    using (var response = await client.GetAsync(url))
+                    if (response.IsSuccessStatusCode)
                     {
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var fileJsonString = await response.Content.ReadAsStringAsync();
-                            List<DataSet> retDataset = JsonConvert.DeserializeObject<List<DataSet>>(fileJsonString);
-                            odataset = ConfigureTabelasRetornoServidor(retDataset);
-
-                        }
+                        var fileJsonString = await response.Content.ReadAsStringAsync();
+                        List<DataSet> retDataset = JsonConvert.DeserializeObject<List<DataSet>>(fileJsonString);
+                        odataset = ConfigureTabelasRetornoServidor(retDataset);
                     }
                 }
             }
@@ -111,23 +105,14 @@ namespace ApoioContabilidade.Models
             //url = "http://" + host + ":5000/api/SelectML/SP?query=" + querySP;
             try
             {
-
-
-                using (var client = new HttpClient())
+                using (var response = await _httpClient.GetAsync(url))
                 {
-                    using (var response = await client.GetAsync(url))
+                    if (response.IsSuccessStatusCode)
                     {
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var fileJsonString = await response.Content.ReadAsStringAsync();
-                            List<DataSet> retDataset = JsonConvert.DeserializeObject<List<DataSet>>(fileJsonString);
-                            odataset = ConfigureTabelasRetornoServidor(retDataset);
-
-                        }
-
+                        var fileJsonString = await response.Content.ReadAsStringAsync();
+                        List<DataSet> retDataset = JsonConvert.DeserializeObject<List<DataSet>>(fileJsonString);
+                        odataset = ConfigureTabelasRetornoServidor(retDataset);
                     }
-
                 }
             }
             catch (Exception)
@@ -168,23 +153,14 @@ namespace ApoioContabilidade.Models
             //url = "http://" + host + ":5000/api/SelectML/SP?query=" + querySP;
             try
             {
-
-
-                using (var client = new HttpClient())
+                using (var response = await _httpClient.GetAsync(url))
                 {
-                    using (var response = await client.GetAsync(url))
+                    if (response.IsSuccessStatusCode)
                     {
-
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var fileJsonString = await response.Content.ReadAsStringAsync();
-                            List<DataSet> retDataset = JsonConvert.DeserializeObject<List<DataSet>>(fileJsonString);
-                            odataset = ConfigureTabelasRetornoServidor(retDataset);
-
-                        }
-
+                        var fileJsonString = await response.Content.ReadAsStringAsync();
+                        List<DataSet> retDataset = JsonConvert.DeserializeObject<List<DataSet>>(fileJsonString);
+                        odataset = ConfigureTabelasRetornoServidor(retDataset);
                     }
-
                 }
             }
             catch (Exception)
@@ -468,27 +444,19 @@ namespace ApoioContabilidade.Models
                 url = "/api/SelectML/editeCSharp?modo=altera";
             }
 
-            using (var client = new HttpClient())
+            try
             {
-                client.BaseAddress = new Uri(uri);
-                try
+                var content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("query", str) });
+                var response = await _httpClient.PostAsync(uri + url, content);
+                if (response.IsSuccessStatusCode)
                 {
-                    try
-                    {
-                        var content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("query", str) });
-                        var response = await client.PostAsync(url, content);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            string resultContent = await response.Content.ReadAsStringAsync();
-                            try { retorno = Convert.ToInt32(resultContent); }
-                            catch (Exception) { }
-                        }
-                    }
+                    string resultContent = await response.Content.ReadAsStringAsync();
+                    try { retorno = Convert.ToInt32(resultContent); }
                     catch (Exception) { }
                 }
-                catch (Exception) { }
-
             }
+            catch (Exception) { }
+
             return retorno;
         }
 
