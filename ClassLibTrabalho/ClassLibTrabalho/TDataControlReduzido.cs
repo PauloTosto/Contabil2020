@@ -304,88 +304,9 @@ namespace ClassLibTrabalho//WFAEstatiscaTrabalho
             }
             return result;
         }
-        static public string ExcelNomePlanilha(string Path_Excel)
-        {
-            Microsoft.Office.Interop.Excel.ApplicationClass ExcelObj = new Microsoft.Office.Interop.Excel.ApplicationClass();
-
-            try
-            {
-
-                if (ExcelObj == null)
-                {
-                    MessageBox.Show("ERROR: EXCEL não pôde ser iniciado!");
-                    return "";
-                }
-                // ExcelObj.Visible = true;                                          // read only
-                Microsoft.Office.Interop.Excel.Workbook oWorkbook = ExcelObj.Workbooks.Open(Path_Excel, 0, false, 5,
-                  "", "", false, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t",
-                     true, true, 0, true, 0, 0);
-
-                try
-                {
-                    Microsoft.Office.Interop.Excel.Sheets sheets = oWorkbook.Worksheets;
-
-                    string nome = ((Microsoft.Office.Interop.Excel.Worksheet)sheets.get_Item(1)).Name;
-                    oWorkbook.Close(false, Path_Excel, null);
-                    ExcelObj.Quit();
-                    return nome;
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
-        }
-        public static DataTable LeiaExcel(string path_excel, string nomeplanilha)
-        {
-            string strodbc, connectionstring;
-            OdbcCommand odbccomm;
-            OdbcDataAdapter odbcda;
-            DataSet odataset;
-            OdbcConnection excelodbcconnection;
-            DataTable result = null;
-            try
-            {
-
-                strodbc = " select * " +
-                     " from " + "`" + nomeplanilha + "$`"; // where (`Vizinhos$`.`SETOR` <> null) and (`Vizinhos$`.`VIZNUMPLANTA` <> null)" +
-                //  " order by `Vizinhos$`.`SETOR`,`Vizinhos$`.`QUADRA`, `Vizinhos$`.`FILA`, `Vizinhos$`.`Numplanta`";
-                connectionstring = "PageTimeout=5;FIL=excel 8.0;MaxBufferSize=2048;DSN=Arquivos do Excel;DBQ="
-                 + path_excel + ";DriverId=790";
-                //Driver={Microsoft Text Driver(*.txt; *.csv)};DBQ= ;//"Driver={Microsoft Text Driver(*.txt; *.csv)};DQB=c:\teste"
-                excelodbcconnection = new OdbcConnection(connectionstring);
-                excelodbcconnection.Open();
-                odbccomm = new OdbcCommand(strodbc, excelodbcconnection);
-
-
-
-                odbcda = new OdbcDataAdapter(odbccomm);
-
-
-                odbcda.TableMappings.Add("Table", nomeplanilha + "$");
-                odataset = new DataSet();
-                odbcda.Fill(odataset);
-
-                result = odataset.Tables[nomeplanilha + "$"];
-
-                // verifica se existe todos os campos requeridos
-
-
-                excelodbcconnection.Close();
-                return result;
-            }
-            catch (Exception)
-            {
-                throw new Exception("Erro leitura Excel");
-            }
-
-        }
+        // ExcelNomePlanilha e LeiaExcel removidos: nao tinham nenhum caller (todos os
+        // consumidores chamam ClassConexao.TDataControlReduzido). A versao em ClassConexao
+        // ja foi migrada para nao depender de Excel Interop.
 
         static public int AlteraTabela(string diretorio, string tabela, string campo, string tipo)
         {

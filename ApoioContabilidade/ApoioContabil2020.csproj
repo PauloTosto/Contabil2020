@@ -342,7 +342,6 @@
       <DependentUpon>FrmGravaMovFinNoServidor.cs</DependentUpon>
     </Compile>
     <Compile Include="Services\TabelasIniciaisDBF.cs" />
-    <Compile Include="Trabalho\ExcelRange.cs" />
     <Compile Include="Trabalho\FrmPontoMes.cs">
       <SubType>Form</SubType>
     </Compile>
