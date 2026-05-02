@@ -739,13 +739,17 @@ namespace ApoioContabilidade
                     string nomeplanilha = TDataControlReduzido.ExcelNomePlanilha(openFileDialog1.FileName);
                     tabexcel = TDataControlReduzido.LeiaExcel(openFileDialog1.FileName, nomeplanilha);
                     Form oform = new Form();
+                    oform.Width = 900;
+                    oform.Height = 600;
+                    oform.StartPosition = FormStartPosition.CenterScreen;
                     // Era DataGrid (controle .NET 1.0) que tem bug ao bindar DataTable e mostrava
                     // só a primeira linha repetida. DataGridView lida com DataTable corretamente.
                     DataGridView oview = new DataGridView();
                     oview.ReadOnly = true;
                     oview.AllowUserToAddRows = false;
                     oview.AllowUserToDeleteRows = false;
-                    oview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+                    oview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+                    oview.RowHeadersVisible = false;
                     if (nomeplanilha.Trim().ToUpper() != "PESQUISA")
                     {
                         tabexcel.AsEnumerable().ToList().ForEach(
@@ -775,21 +779,24 @@ namespace ApoioContabilidade
                         MessageBox.Show("O nome da Pasta pode ser qualquer um. O Nome da PLANILHA tem que ser PESQUISA");
                         return;
                     }
-                    // BindingSource garante que o DataGridView reflita corretamente a DataTable.
-                    BindingSource binding = new BindingSource();
+                    // Le o RELACIONA.DBF FRESCO do disco apos o import para evitar
+                    // qualquer estado interno bizarro do OleDbDataAdapter em memoria.
+                    // Bind direto na DataTable (sem BindingSource).
+                    DataTable tabelaParaExibir;
                     if (mostraRelaciona)
                     {
-                        binding.DataSource = dsrelaciona.Tables["RELACIONA"];
-                        oform.Text = "RELACIONA => Criado pelo EXCEL (" + dsrelaciona.Tables["RELACIONA"].Rows.Count + " linhas)";
+                        DataSet dsRefresh = TDataControlContab.TabRelaciona();
+                        tabelaParaExibir = dsRefresh.Tables[0];
+                        oform.Text = "RELACIONA => Criado pelo EXCEL (" + tabelaParaExibir.Rows.Count + " linhas)";
                     }
                     else
                     {
-                        binding.DataSource = tabexcel;
+                        tabelaParaExibir = tabexcel;
                         oform.Text = "EXCEL DIRETO (" + tabexcel.Rows.Count + " linhas)";
                     }
-                    oview.DataSource = binding;
-                    oview.Parent = oform;
+                    oform.Controls.Add(oview);
                     oview.Dock = DockStyle.Fill;
+                    oview.DataSource = tabelaParaExibir;
                     oform.Show();
 
                 }
