@@ -739,7 +739,13 @@ namespace ApoioContabilidade
                     string nomeplanilha = TDataControlReduzido.ExcelNomePlanilha(openFileDialog1.FileName);
                     tabexcel = TDataControlReduzido.LeiaExcel(openFileDialog1.FileName, nomeplanilha);
                     Form oform = new Form();
-                    DataGrid oview = new DataGrid();
+                    // Era DataGrid (controle .NET 1.0) que tem bug ao bindar DataTable e mostrava
+                    // só a primeira linha repetida. DataGridView lida com DataTable corretamente.
+                    DataGridView oview = new DataGridView();
+                    oview.ReadOnly = true;
+                    oview.AllowUserToAddRows = false;
+                    oview.AllowUserToDeleteRows = false;
+                    oview.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
                     if (nomeplanilha.Trim().ToUpper() != "PESQUISA")
                     {
                         tabexcel.AsEnumerable().ToList().ForEach(
@@ -769,19 +775,19 @@ namespace ApoioContabilidade
                         MessageBox.Show("O nome da Pasta pode ser qualquer um. O Nome da PLANILHA tem que ser PESQUISA");
                         return;
                     }
+                    // BindingSource garante que o DataGridView reflita corretamente a DataTable.
+                    BindingSource binding = new BindingSource();
                     if (mostraRelaciona)
                     {
-                        oview.DataSource = dsrelaciona.Tables["RELACIONA"];
-                        oform.Text = "RELACIONA => Criado pelo EXCEL";
-
+                        binding.DataSource = dsrelaciona.Tables["RELACIONA"];
+                        oform.Text = "RELACIONA => Criado pelo EXCEL (" + dsrelaciona.Tables["RELACIONA"].Rows.Count + " linhas)";
                     }
                     else
                     {
-                        oview.DataSource = tabexcel;
-                        oform.Text = "EXCEL DIRETO";
+                        binding.DataSource = tabexcel;
+                        oform.Text = "EXCEL DIRETO (" + tabexcel.Rows.Count + " linhas)";
                     }
-                    // for (int i = 0;i<oview.TableStyles[0].GridColumnStyles.Count;i++)
-                    //    oview.TableStyles[0].GridColumnStyles[i].NullText = ""; 
+                    oview.DataSource = binding;
                     oview.Parent = oform;
                     oview.Dock = DockStyle.Fill;
                     oform.Show();
