@@ -1,10 +1,13 @@
 ﻿using ApoioContabilidade.Fiscal.ACBR.Classes;
 using ClassFiltroEdite;
+using OfficeOpenXml;
+using OfficeOpenXml.Style;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
@@ -19,8 +22,6 @@ namespace ApoioContabilidade.ZContabAlterData
         private MonteGrid oRazao;
 
         public int LinhasMinimas = 3;
-        private Char[] Letras = new Char[21] {'A','B','C','D','E','F','G','H','I','J','K',
-                                  'L','M','N','O','P','Q','R','S','T','U'};
 
 
 
@@ -164,155 +165,97 @@ namespace ApoioContabilidade.ZContabAlterData
 
         private void btnExcel_Click(object sender, EventArgs e)
         {
-            System.Windows.Forms.DialogResult result;// = System.Windows.Forms.DialogResult.OK;
             SaveFileDialog SaveFileDialog1 = new SaveFileDialog();
-            SaveFileDialog1.DefaultExt = "xls";
+            SaveFileDialog1.DefaultExt = "xlsx";
+            SaveFileDialog1.Filter = "Excel Workbook (*.xlsx)|*.xlsx";
             SaveFileDialog1.AddExtension = true;
-
             SaveFileDialog1.CheckFileExists = false;
-            result = SaveFileDialog1.ShowDialog();
 
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if (SaveFileDialog1.ShowDialog() != DialogResult.OK) return;
+
+            Cursor.Current = Cursors.WaitCursor;
+            string filename = SaveFileDialog1.FileName;
+            if (!filename.ToLower().EndsWith(".xlsx")) filename += ".xlsx";
+
+            try
             {
-                Cursor.Current = Cursors.WaitCursor;
-                Microsoft.Office.Interop.Excel.Application ExcelObj = new Microsoft.Office.Interop.Excel.Application();
+                FileInfo fi = new FileInfo(filename);
+                if (fi.Exists) fi.Delete();
 
-                try
+                using (var pkg = new ExcelPackage(fi))
                 {
-                    if (ExcelObj == null)
+                    var ws = pkg.Workbook.Worksheets.Add("Planilha1");
+
+                    int linhasinicio = 1;
+                    foreach (DataGridViewRow orowdgv in dgvBalancete.Rows)
                     {
-                        MessageBox.Show("ERROR: EXCEL não pôde ser iniciado!");
-                        return;
-                    }
-                    // ExcelObj.Visible = true;
+                        DataRowView orow = (orowdgv.DataBoundItem as DataRowView);
+                        if (orow == null) continue;
 
-                    Microsoft.Office.Interop.Excel.Workbook oWorkbook =
-                        ExcelObj.Workbooks.Add(Microsoft.Office.Interop.Excel.XlWBATemplate.xlWBATWorksheet);
+                        string conta = orow["NUMCONTA"].ToString();
+                        if (conta.Substring(5, 3) == "000") continue;
 
+                        string descri = orow["DESCBAL"].ToString();
+                        decimal sdoant = Convert.ToDecimal(orow["SDOANT"]);
+                        DateTime inicio = Convert.ToDateTime(orow["INICIO"]);
+                        DateTime fim = Convert.ToDateTime(orow["FIM"]);
 
-                   // Microsoft.Office.Interop.Excel.Range Oget_Range;
+                        dtRazao = Reload(conta, inicio, sdoant);
+                        if (dtRazao.Rows.Count < 2) continue;
 
+                        oRazao = new MonteGrid();
+                        MonteGrids();
+                        oRazao.oDataGridView = dgvRazao;
 
-                    try
-                    {
+                        bmSource = new BindingSource();
+                        bmSource.DataSource = dtRazao;
+                        dgvRazao.DataSource = bmSource;
+                        oRazao.ConfigureDBGridView();
 
-                        int linhasinicio = 1;
-                        Microsoft.Office.Interop.Excel.Sheets sheets = oWorkbook.Worksheets;
-
-                        Microsoft.Office.Interop.Excel._Worksheet oworksheet = (Microsoft.Office.Interop.Excel.Worksheet)sheets.get_Item(1);
-
-                        oworksheet.Activate();
-                        oworksheet.Name = "Planilha1";
-                        
-
-                        foreach (DataGridViewRow orowdgv in dgvBalancete.Rows)
+                        // Extrai DataView do binding (preserva logica original)
+                        DataView odataview = null;
+                        if (oRazao.oDataGridView == null) continue;
+                        if (oRazao.oDataGridView.DataSource is BindingSource)
                         {
-
-                            //var orowdgv = dgvBalancete.CurrentRow;
-                            DataRowView orow = (orowdgv.DataBoundItem as DataRowView);
-                            if (orow != null)
+                            var bs = (BindingSource)oRazao.oDataGridView.DataSource;
+                            if (bs.DataSource is DataView)
                             {
-                                string conta = orow["NUMCONTA"].ToString();
-                                
-
-                                if (conta.Substring(5, 3) == "000")
-                                    continue;
-                                string descri = orow["DESCBAL"].ToString();
-                                decimal sdoant = Convert.ToDecimal(orow["SDOANT"]);
-                                DateTime inicio = Convert.ToDateTime(orow["INICIO"]);
-                                DateTime fim = Convert.ToDateTime(orow["FIM"]);
-
-
-                                dtRazao = Reload(conta,inicio,sdoant);
-                                if (dtRazao.Rows.Count < 2)
-                                { continue; }
-                                oRazao = new MonteGrid();
-                                MonteGrids();
-
-                                oRazao.oDataGridView = dgvRazao;
-                                //oBalancete.sbTotal = sbBalancete
-
-                                bmSource = new BindingSource();
-                                bmSource.DataSource = dtRazao;
-                                ///bmSourceSaida.DataSource = dvSaidas;
-                                dgvRazao.DataSource = bmSource;
-                                oRazao.ConfigureDBGridView();
-                                string odatamember = "";
-                                DataSet odataset = null;
-                                DataView odataview = null;
-                                if (oRazao.oDataGridView == null) continue;
-                                if (oRazao.oDataGridView.DataSource is BindingSource)
-                                {
-                                    if (((BindingSource)oRazao.oDataGridView.DataSource).DataSource is DataSet)
-                                    {
-                                        odataset = (DataSet)((BindingSource)oRazao.oDataGridView.DataSource).DataSource;
-                                        odatamember = ((BindingSource)oRazao.oDataGridView.DataSource).DataMember;
-                                    }
-                                    else
-                                    {
-                                        if (((BindingSource)oRazao.oDataGridView.DataSource).DataSource is DataView)
-                                        {
-                                            odataview = (DataView)((BindingSource)oRazao.oDataGridView.DataSource).DataSource;
-                                            odatamember = odataview.Table.TableName;
-                                        }
-                                        else if (((BindingSource)oRazao.oDataGridView.DataSource).DataSource is System.Data.DataTable)
-                                        {
-                                            odataview = (((BindingSource)oRazao.oDataGridView.DataSource).DataSource as System.Data.DataTable).DefaultView;
-                                            odatamember = odataview.Table.TableName;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    odataset = (DataSet)oRazao.oDataGridView.DataSource;
-                                    odatamember = oRazao.oDataGridView.DataMember;
-                                }
-                                try
-                                {
-                                    lbDescricao.Text = descri;
-                                    Cursor.Current = Cursors.WaitCursor;
-                                    linhasinicio = CorpoExcel(oWorkbook, oworksheet, odataview, descri, linhasinicio);
-                                    linhasinicio = linhasinicio + 3;
-                                }
-                                catch (Exception E)
-                                {
-                                    MessageBox.Show(E.Message);
-                                    
-                                }
-                                
+                                odataview = (DataView)bs.DataSource;
                             }
-
-
-                            
+                            else if (bs.DataSource is System.Data.DataTable)
+                            {
+                                odataview = ((System.Data.DataTable)bs.DataSource).DefaultView;
+                            }
                         }
-                       oWorkbook.SaveAs(SaveFileDialog1.FileName, Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookNormal,
-                      "", "", false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlShared,
-                       Microsoft.Office.Interop.Excel.XlSaveConflictResolution.xlUserResolution, true, "", "", false);
+                        if (odataview == null) continue;
 
-                    }
-                    catch (Exception E)
-                    {
-                        MessageBox.Show("Erro ao tentar abrir tabela Excel ", "",
-                        MessageBoxButtons.OKCancel, MessageBoxIcon.Asterisk);
-                        return;
-                    }
-                }
-                finally
-                {
-                    //oWor;
-                    if (ExcelObj != null)
-                    {
-                        ExcelObj.Quit();
-                        MessageBox.Show("Excel " + SaveFileDialog1.FileName + " Gravado Ok");
+                        try
+                        {
+                            lbDescricao.Text = descri;
+                            Cursor.Current = Cursors.WaitCursor;
+                            linhasinicio = CorpoExcel(ws, odataview, descri, linhasinicio);
+                            linhasinicio += 3;
+                        }
+                        catch (Exception E)
+                        {
+                            MessageBox.Show(E.Message);
+                        }
                     }
 
-                    Cursor.Current = Cursors.Default;
+                    pkg.Save();
                 }
+
+                MessageBox.Show("Excel " + filename + " gravado OK.");
             }
-
-
-
-            // oRazao.ExportaExcel();
+            catch (Exception E)
+            {
+                MessageBox.Show("Erro ao gerar planilha Excel: " + E.Message, "",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
         }
 
         private void MonteGrids()
@@ -334,146 +277,95 @@ namespace ApoioContabilidade.ZContabAlterData
         
 
 
-        private Microsoft.Office.Interop.Excel.Range Colunas_exc(string colunas, Microsoft.Office.Interop.Excel._Worksheet oworksheet)
+        private int CorpoExcel(ExcelWorksheet ws, DataView odataview, string tituloExcel, int linhasInicioExcel)
         {
-            string coluna1 = "";
-            coluna1 = colunas.Trim();
-            return oworksheet.get_Range(coluna1 + "1", coluna1 + "65536");
-        }
-
-        private Microsoft.Office.Interop.Excel.Range Colunas_exc(string Coluna1, string Coluna2, int Linha1, int Linha2, Microsoft.Office.Interop.Excel._Worksheet oworksheet)
-        {
-            string coluna1 = "";
-            string coluna2 = "";
-            coluna1 = Coluna1.Trim();
-            coluna2 = Coluna2.Trim();
-            return oworksheet.get_Range(coluna1 + Linha1.ToString().Trim(), coluna2 + Linha2.ToString().Trim());
-        }
-
-        
-        private int CorpoExcel(Microsoft.Office.Interop.Excel.Workbook oWorkbook ,
-            Microsoft.Office.Interop.Excel._Worksheet oworksheet,
-            DataView odataview, string tituloExcel, int linhasInicioExcel)
-        {
-
-           Microsoft.Office.Interop.Excel.Range Oget_Range;
-
-
             int linhasinicio = linhasInicioExcel;
-           
-            // define linha max
             int linhasmax = linhasinicio + odataview.Count;
 
-            //titulo
-            int linhas = linhasinicio;
-            int numcol = 0;
-            string linhastr = linhas.ToString();
-
+            // Linha de titulo
+            int linha = linhasinicio;
+            int col = 1;
             if (tituloExcel != "")
-                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = tituloExcel;
+                ws.Cells[linha, col].Value = tituloExcel;
 
-
-            numcol = 0;
-            linhas = linhas + 1;
-            linhastr = linhas.ToString();
-
-            // cabeçalho
+            // Linha de cabecalho
+            linha += 1;
+            col = 1;
             Type tipo = null;
             foreach (Campo campo in oRazao.LinhasCampo)
             {
-                Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                          (linhas + 1), linhasmax, oworksheet);
-                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = campo.cabecalho;
-                Oget_Range.ColumnWidth = campo.tamanho;
-                if (odataview.Table.Columns.Contains(campo.titulo)) { tipo = odataview.Table.Columns[campo.titulo].DataType; }
+                ws.Cells[linha, col].Value = campo.cabecalho;
+                ws.Column(col).Width = campo.tamanho;
+                if (odataview.Table.Columns.Contains(campo.titulo))
+                    tipo = odataview.Table.Columns[campo.titulo].DataType;
+                else
+                    tipo = null;
+
                 if (tipo != null)
                 {
-                    if ((tipo != Type.GetType("System.String")) && (tipo != Type.GetType("System.Boolean")) && (tipo != Type.GetType("System.DateTime")))
+                    if (tipo != typeof(string) && tipo != typeof(bool) && tipo != typeof(DateTime))
                     {
                         int tam = campo.format.Length > 0 ? campo.format.Length : 5;
-                        if (tam > Convert.ToInt32(Oget_Range.ColumnWidth))
-                            Oget_Range.ColumnWidth = tam;
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).HorizontalAlignment = Microsoft.Office.Interop.Excel.XlHAlign.xlHAlignRight;
+                        if (tam > ws.Column(col).Width) ws.Column(col).Width = tam;
+                        ws.Cells[linha, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
                     }
-                    if ((tipo == Type.GetType("System.DateTime")) && (campo.format != ""))
+                    if (tipo == typeof(DateTime) && campo.format != "")
                     {
                         int tam = campo.format.Length > 0 ? campo.format.Length : 5;
-                        if (tam > Convert.ToInt32(Oget_Range.ColumnWidth))
-                            Oget_Range.ColumnWidth = tam;
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).HorizontalAlignment = Microsoft.Office.Interop.Excel.XlHAlign.xlHAlignCenter;
+                        if (tam > ws.Column(col).Width) ws.Column(col).Width = tam;
+                        ws.Cells[linha, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                     }
                 }
-                else
+                else if (campo.format != "")
                 {
-                    if (campo.format != "")
-                    {
-                        int tam = campo.format.Length > 0 ? campo.format.Length : 5;
-                        if (tam > Oget_Range.ColumnWidth)
-                            Oget_Range.ColumnWidth = tam;
-                    }
+                    int tam = campo.format.Length > 0 ? campo.format.Length : 5;
+                    if (tam > ws.Column(col).Width) ws.Column(col).Width = tam;
                 }
-                numcol += 1;
+                col += 1;
             }
 
-
-            linhas += 1;
+            // Linhas de dados
+            linha += 1;
             foreach (DataRowView orow in odataview)
             {
-                numcol = 0;
-                linhastr = linhas.ToString();
+                col = 1;
                 foreach (Campo campo in oRazao.LinhasCampo)
                 {
                     object dado = "";
                     try
                     {
                         tipo = orow[campo.titulo].GetType();
-                        if (tipo == Type.GetType("System.DateTime"))
+                        if (tipo == typeof(DateTime))
                         {
-                            if (campo.format != "")
-                            {
-                                dado = orow[campo.titulo];
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = campo.format;
-                            }
-                            else { 
-                                dado = Convert.ToDateTime(orow[campo.titulo]);
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = "DD/MM/YYY";
-                            }
-
+                            dado = orow[campo.titulo];
+                            ws.Cells[linha, col].Style.Numberformat.Format =
+                                campo.format != "" ? campo.format : "DD/MM/YYY";
                         }
-                        else if ((tipo != Type.GetType("System.String")) && (tipo != Type.GetType("System.Boolean"))) // numerico
+                        else if (tipo != typeof(string) && tipo != typeof(bool)) // numerico
                         {
-                            if (campo.format != "")
-                            {
-                                if (tipo == Type.GetType("System.Decimal") || tipo == Type.GetType("System.Double") || tipo == Type.GetType("System.Single"))
-                                { dado = orow[campo.titulo]; }
-                                else
-                                { dado = orow[campo.titulo]; }
-                            }
-                            else { dado = orow[campo.titulo]; }
-                            oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = campo.format;
-                            oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).HorizontalAlignment = Microsoft.Office.Interop.Excel.XlHAlign.xlHAlignRight;
+                            dado = orow[campo.titulo];
+                            ws.Cells[linha, col].Style.Numberformat.Format = campo.format;
+                            ws.Cells[linha, col].Style.HorizontalAlignment = ExcelHorizontalAlignment.Right;
                         }
                         else
+                        {
                             dado = orow[campo.titulo].ToString();
+                        }
                     }
-                    catch
-                    { }
+                    catch { }
 
-                    oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = dado;
-                    numcol += 1;
+                    ws.Cells[linha, col].Value = dado;
+                    col += 1;
                 }
-                linhas += 1;
+                linha += 1;
             }
 
-            int linhasretorno = linhas;
+            int linhasretorno = linha;
 
-            linhas = linhasinicio;
-            numcol = 0;
-            Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol + (oRazao.LinhasCampo.Count - 1)].ToString(),
-                 linhas, (linhasmax+1), oworksheet);
-            Oget_Range.Borders.LineStyle = Microsoft.Office.Interop.Excel.XlLineStyle.xlContinuous;
+            // Borda em volta do bloco inteiro
+            int colFim = oRazao.LinhasCampo.Count;
+            ws.Cells[linhasinicio, 1, linhasmax + 1, colFim].Style.Border.BorderAround(ExcelBorderStyle.Thin);
             return linhasretorno;
-
         }
 
        
