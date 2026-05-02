@@ -339,42 +339,36 @@ namespace ClassConexao//ClassLibTrabalho//WFAEstatiscaTrabalho
         }
         static public string ExcelNomePlanilha(string Path_Excel)
         {
-            
-             Microsoft.Office.Interop.Excel.Application ExcelObj = new Microsoft.Office.Interop.Excel.Application();
-
+            // Antes usava Microsoft.Office.Interop.Excel: exigia Excel instalado, era lento,
+            // deixava processos EXCEL.EXE zumbis e quebrava com TYPE_E_ELEMENTNOTFOUND quando
+            // o bitness do app difere do bitness do Office instalado.
+            // Agora usa OleDB schema query no mesmo provider ACE.OLEDB.12.0 ja usado em LeiaExcel.
+            string connStr = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + Path_Excel +
+                             ";Extended Properties='Excel 12.0 Xml;HDR=YES'";
             try
             {
-
-                if (ExcelObj == null)
+                using (var conn = new OleDbConnection(connStr))
                 {
-                    MessageBox.Show("ERROR: EXCEL não pôde ser iniciado!");
+                    conn.Open();
+                    DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+                    if (schema == null || schema.Rows.Count == 0) return "";
+                    // Pega a primeira planilha visivel. TABLE_NAME vem como "Plan1$" ou "'Nome com espaco$'"
+                    foreach (DataRow row in schema.Rows)
+                    {
+                        string raw = row["TABLE_NAME"].ToString();
+                        // Ignora ranges nomeados e planilhas ocultas (terminam em "$_xlnm")
+                        if (!raw.EndsWith("$") && !raw.EndsWith("$'")) continue;
+                        string nome = raw.Trim('\'');
+                        if (nome.EndsWith("$")) nome = nome.Substring(0, nome.Length - 1);
+                        return nome;
+                    }
                     return "";
                 }
-                // ExcelObj.Visible = true;                                          // read only
-                Microsoft.Office.Interop.Excel.Workbook oWorkbook = ExcelObj.Workbooks.Open(Path_Excel, 0, false, 5,
-                  "", "", false, Microsoft.Office.Interop.Excel.XlPlatform.xlWindows, "\t",
-                     true, true, 0, true, 0, 0);
-
-                try
-                {
-                    Microsoft.Office.Interop.Excel.Sheets sheets = oWorkbook.Worksheets;
-
-                    string nome = ((Microsoft.Office.Interop.Excel.Worksheet)sheets.get_Item(1)).Name;
-                    oWorkbook.Close(false, Path_Excel, null);
-                    ExcelObj.Quit();
-                    return nome;
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-
             }
-            catch (Exception)
+            catch (Exception E)
             {
-                throw;
+                throw new Exception("Erro abrindo Excel para descobrir nome da planilha: " + E.Message, E);
             }
-           
         }
         public static DataTable LeiaExcel(string path_excel, string nomeplanilha, string query = "")
         {
