@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.IO;
 using ClassConexao;
 using ClassFiltroEdite;
+using OfficeOpenXml;
 namespace ApoioContabilidade
 {
     public partial class FrmFinVauche : Form
@@ -484,289 +485,122 @@ namespace ApoioContabilidade
 
         
 
-        private Microsoft.Office.Interop.Excel.Range Colunas_exc(string colunas, Microsoft.Office.Interop.Excel._Worksheet oworksheet)
-        {
-            string coluna1 = "";
-            coluna1 = colunas.Trim();
-            return oworksheet.get_Range(coluna1 + "1", coluna1 + "65536");
-        }
-
-        private Microsoft.Office.Interop.Excel.Range Colunas_exc(string Coluna1, string Coluna2, int Linha1, int Linha2, Microsoft.Office.Interop.Excel._Worksheet oworksheet)
-        {
-            string coluna1 = "";
-            string coluna2 = "";
-            coluna1 = Coluna1.Trim();
-            coluna2 = Coluna2.Trim();
-            return oworksheet.get_Range(coluna1 + Linha1.ToString().Trim(), coluna2 + Linha2.ToString().Trim());
-        }
-
-        private Char[] Letras = new Char[21] {'A','B','C','D','E','F','G','H','I','J','K',
-                                  'L','M','N','O','P','Q','R','S','T','U'};
-
-        
-
         public void ExportaExcel()
         {
-
-
-            /*Char[] Letras = new Char[21] {'A','B','C','D','E','F','G','H','I','J','K',
-                                  'L','M','N','O','P','Q','R','S','T','U'};*/
-            //  Int16[] Colunas = new Int16[21] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 ,21};
-            System.Windows.Forms.DialogResult result;// = System.Windows.Forms.DialogResult.OK;
             SaveFileDialog SaveFileDialog1 = new SaveFileDialog();
-            SaveFileDialog1.DefaultExt = "xls";
+            SaveFileDialog1.DefaultExt = "xlsx";
+            SaveFileDialog1.Filter = "Excel Workbook (*.xlsx)|*.xlsx";
             SaveFileDialog1.AddExtension = true;
-
             SaveFileDialog1.CheckFileExists = false;
-            result = SaveFileDialog1.ShowDialog();
 
-            if (result == System.Windows.Forms.DialogResult.OK)
+            if (SaveFileDialog1.ShowDialog() != DialogResult.OK) return;
+
+            Cursor.Current = Cursors.WaitCursor;
+            string filename = SaveFileDialog1.FileName;
+            if (!filename.ToLower().EndsWith(".xlsx")) filename += ".xlsx";
+
+            try
             {
-                Cursor.Current = Cursors.WaitCursor;
-                Microsoft.Office.Interop.Excel.Application ExcelObj = new Microsoft.Office.Interop.Excel.Application();
+                FileInfo fi = new FileInfo(filename);
+                if (fi.Exists) fi.Delete();
 
-                try
+                DataSet dsrelaciona = TDataControlContab.TabRelaciona();
+                DataTable tabrelaciona = dsrelaciona.Tables[0];
+                DataTable tabordenada = dataSet1.Tables[0];
+
+                using (var pkg = new ExcelPackage(fi))
                 {
-                    if (ExcelObj == null)
+                    var ws = pkg.Workbook.Worksheets.Add("Planilha1");
+
+                    // Cabecalho linha 1 (mesmo layout AlterData de ExportaLoteExcel)
+                    ws.Cells[1, 1].Value = "lancto auto";
+                    ws.Cells[1, 2].Value = "debito";
+                    ws.Cells[1, 3].Value = "credito";
+                    ws.Cells[1, 4].Value = "data";
+                    ws.Cells[1, 5].Value = "valor";
+                    ws.Cells[1, 6].Value = "cód histórico";
+                    ws.Cells[1, 7].Value = "complemento historico";
+                    ws.Cells[1, 8].Value = "Ccusto debito";
+                    ws.Cells[1, 9].Value = "Ccusto credito";
+                    ws.Cells[1, 10].Value = "NrDocumento";
+
+                    ws.Column(1).Width = 11;
+                    ws.Column(2).Width = 14;
+                    ws.Column(3).Width = 14;
+                    ws.Column(4).Width = 12;
+                    ws.Column(5).Width = 14;
+                    ws.Column(6).Width = 8;
+                    ws.Column(7).Width = 45;
+                    ws.Column(8).Width = 8;
+                    ws.Column(9).Width = 8;
+                    ws.Column(10).Width = 20;
+
+                    int row = 2;
+                    foreach (DataRow linexc in tabordenada.Rows)
                     {
-                        MessageBox.Show("ERROR: EXCEL não pôde ser iniciado!");
-                        return;
-                    }
-                    // ExcelObj.Visible = true;
+                        bool debitoVazio = Convert.IsDBNull(linexc["DEBITO"]) || Convert.ToString(linexc["DEBITO"]).Trim() == "";
+                        bool creditoVazio = Convert.IsDBNull(linexc["CREDITO"]) || Convert.ToString(linexc["CREDITO"]).Trim() == "";
+                        if (debitoVazio && creditoVazio) continue;
 
-                    Microsoft.Office.Interop.Excel.Workbook oWorkbook =
-                        ExcelObj.Workbooks.Add(Microsoft.Office.Interop.Excel.XlWBATemplate.xlWBATWorksheet);
-
-                    Microsoft.Office.Interop.Excel.Range Oget_Range;
-                    try
-                    {
-                        int linhasinicio = 1;
-                        Microsoft.Office.Interop.Excel.Sheets sheets = oWorkbook.Worksheets;
-
-                        Microsoft.Office.Interop.Excel._Worksheet oworksheet = (Microsoft.Office.Interop.Excel.Worksheet)sheets.get_Item(1);
-
-                        oworksheet.Activate();
-                        oworksheet.Name = "Planilha1";
-
-                        // define linha max
-                       // int linhasmax = linhasinicio + odataview.Count;
-
-                        //titulo
-                        int linhas = 1;
-                        int numcol = 0;
-                        string linhastr = linhas.ToString();
-                        
-                        DataSet dsrelaciona = TDataControlContab.TabRelaciona();
-                        DataTable tabrelaciona = dsrelaciona.Tables[0];
-
-
-                        DataTable tabordenada = dataSet1.Tables[0];
-                        int linhasmax = linhasinicio + tabordenada.Rows.Count;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                      (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "lancto auto";
-                        Oget_Range.ColumnWidth = 11;
-                       
-                        numcol = 1;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "debito";
-                        Oget_Range.ColumnWidth = 14;
-
-                        numcol = 2;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "credito";
-                        Oget_Range.ColumnWidth = 14;
-
-                        numcol = 3;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "data";
-                       // oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = "dd/MM/yyyy";
-                        Oget_Range.ColumnWidth = 12;
-
-
-                        numcol = 4;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "valor";
-                        //oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = "###,##0.00";
-                        Oget_Range.ColumnWidth = 14;
-
-                        numcol = 5;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "cód histórico";
-                        Oget_Range.ColumnWidth = 8;
-
-                        numcol = 6;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "complemento historico";
-                        Oget_Range.ColumnWidth = 45;
-
-                        numcol = 7;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "Ccusto debito";
-                        Oget_Range.ColumnWidth = 8;
-
-                        numcol = 8;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "Ccusto credito";
-                        Oget_Range.ColumnWidth = 8;
-
-                        numcol = 9;
-                        Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                     (linhas + 1), linhasmax, oworksheet);
-                        oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = "NrDocumento";
-                        Oget_Range.ColumnWidth = 20;
-
-                        /*numcol = 1;
-                        linhas = linhasinicio;
-                        linhastr = linhas.ToString();
-
-                        // cabeçalho
-                        Type tipo = null;
-                        foreach (Campo campo in LinhasCampo)
+                        string debito = FormateParaNumConta(Convert.ToString(linexc["DEBITO"]), tabrelaciona);
+                        string credito = FormateParaNumConta(Convert.ToString(linexc["CREDITO"]), tabrelaciona);
+                        if (debito == "-1" || credito == "-1")
                         {
-                            Oget_Range = Colunas_exc(Letras[numcol].ToString(), Letras[numcol].ToString(),
-                                                      (linhas + 1), linhasmax, oworksheet);
-                            oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = campo.cabecalho;
-                            Oget_Range.ColumnWidth = campo.tamanho;
-                            if (odataview.Table.Columns.Contains(campo.titulo)) { tipo = odataview.Table.Columns[campo.titulo].DataType; }
-                            if (tipo != null)
-                            {
-                                if ((tipo != Type.GetType("System.String")) && (tipo != Type.GetType("System.Boolean")) && (tipo != Type.GetType("System.DateTime")))
-                                {
-                                    int tam = campo.format.Length > 0 ? campo.format.Length : 5;
-                                    if (tam > Oget_Range.ColumnWidth)
-                                        Oget_Range.ColumnWidth = tam;
-                                    oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).HorizontalAlignment = Microsoft.Office.Interop.Excel.XlHAlign.xlHAlignRight;
-                                }
-                                if ((tipo == Type.GetType("System.DateTime")) && (campo.format != ""))
-                                {
-                                    int tam = campo.format.Length > 0 ? campo.format.Length : 5;
-                                    if (tam > Oget_Range.ColumnWidth)
-                                        Oget_Range.ColumnWidth = tam;
-                                    oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).HorizontalAlignment = Microsoft.Office.Interop.Excel.XlHAlign.xlHAlignCenter;
-                                }
-                            }
-                            else
-                            {
-                                if (campo.format != "")
-                                {
-                                    int tam = campo.format.Length > 0 ? campo.format.Length : 5;
-                                    if (tam > Oget_Range.ColumnWidth)
-                                        Oget_Range.ColumnWidth = tam;
-                                }
-                            }
-                            numcol += 1;
+                            DataRow orow = ErrosNovasContas.NewRow();
+                            orow.ItemArray = linexc.ItemArray;
+                            ErrosNovasContas.Rows.Add(orow);
+                            continue;
                         }
-                        */
+                        if (credito.Trim() == "" && debito.Trim() == "") continue;
 
-                        linhas += 1;
+                        string tdoc = "";
+                        if (Convert.ToString(linexc["DOC"]).Trim() != "")
+                            tdoc = Convert.ToString(linexc["DOC"]).Trim();
+                        else if (Convert.ToString(linexc["DOC_FISC"]).Trim() != "")
+                            tdoc = Convert.ToString(linexc["DOC_FISC"]).Trim();
+                        if (tdoc != "") tdoc = "DOC.n.:" + tdoc;
 
-                        
-                        try
-                        {
-                            foreach (DataRow linexc in tabordenada.Rows)//dsrelaciona.Tables["RELACIONA"].Rows.Count; i++)
-                            {
+                        string thist = "";
+                        if (Convert.ToString(linexc["HIST"]).Trim() != "")
+                            thist = Convert.ToString(linexc["HIST"]).Trim();
 
+                        // Mesmo auto-convert numerico de ExportaLoteExcel para paridade visual
+                        long debitoNum;
+                        if (!string.IsNullOrEmpty(debito) && long.TryParse(debito, out debitoNum))
+                            ws.Cells[row, 2].Value = debitoNum;
+                        else
+                            ws.Cells[row, 2].Value = debito;
 
+                        long creditoNum;
+                        if (!string.IsNullOrEmpty(credito) && long.TryParse(credito, out creditoNum))
+                            ws.Cells[row, 3].Value = creditoNum;
+                        else
+                            ws.Cells[row, 3].Value = credito;
 
-                                if (((Convert.IsDBNull(linexc["DEBITO"])) || (Convert.ToString(linexc["DEBITO"]).Trim() == ""))
-                                    && ((Convert.IsDBNull(linexc["CREDITO"])) || (Convert.ToString(linexc["CREDITO"]).Trim() == "")))
-                                    continue;
+                        ws.Cells[row, 4].Value = Convert.ToDateTime(linexc["DATA"]);
+                        ws.Cells[row, 4].Style.Numberformat.Format = "dd/MM/yyyy";
 
-                                string data = TDataControlReduzido.FormatDataGravarExtenso(Convert.ToDateTime(linexc["DATA"]));
-                                string debito = FormateParaNumConta(Convert.ToString(linexc["DEBITO"]), tabrelaciona);
-                                string credito = FormateParaNumConta(Convert.ToString(linexc["CREDITO"]), tabrelaciona);
-                                if ((debito == "-1") || (credito == "-1"))
-                                {
-                                    DataRow orow = ErrosNovasContas.NewRow();
-                                    orow.ItemArray = linexc.ItemArray;
-                                    ErrosNovasContas.Rows.Add(orow);
-                                    continue;
-                                }
-                               // string linha = "";
-                                // debito = FormateNumeroCodigo(debito);
-                                // credito = FormateNumeroCodigo(credito);
-                                if ((credito.Trim() == "") && (debito.Trim() == "")) continue;
-                                /*linha = TDataControlReduzido.preenchaespaco(data, 8);
-                                linha += TDataControlReduzido.preenchaespaco("", 5);
-                                linha += TDataControlReduzido.preenchaespaco(debito, 14);
-                                linha += TDataControlReduzido.preenchaespaco("", 3);
-                                linha += TDataControlReduzido.preenchaespaco(credito, 14);
-                                linha += TDataControlReduzido.preenchaespaco("", 3);
-                                linha += TDataControlReduzido.FormatNumero(Convert.ToSingle(linexc["VALOR"]), 14);
-                                linha += TDataControlReduzido.preenchaespaco("", 3);*/
-                                string tdoc = "";
-                                if (Convert.ToString(linexc["DOC"]).Trim() != "")
-                                    tdoc = Convert.ToString(linexc["DOC"]).Trim();
-                                else
-                                    if (Convert.ToString(linexc["DOC_FISC"]).Trim() != "")
-                                    tdoc = Convert.ToString(linexc["DOC_FISC"]).Trim();
-                                if (tdoc != "")
-                                    tdoc = "DOC.n.:" + tdoc;
-                                string thist = "";
-                                if (Convert.ToString(linexc["HIST"]).Trim() != "")
-                                    thist = Convert.ToString(linexc["HIST"]).Trim();
-                                linhastr = linhas.ToString();
-                                numcol = 1; // debito
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = debito;
+                        ws.Cells[row, 5].Value = Convert.ToDecimal(linexc["VALOR"]);
+                        ws.Cells[row, 5].Style.Numberformat.Format = "###,###,##0.00";
 
-                                numcol = 2; // credito
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = credito;
-
-                                numcol = 3; // data
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = "dd/mm/aaaa";
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = Convert.ToDateTime(linexc["DATA"]);
-                                
-                                numcol = 4; // valor
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).NumberFormat = "##.###.##0,00";
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = Convert.ToDecimal(linexc["VALOR"]);
-                                
-                                numcol = 6; // historico
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = thist;
-                                numcol = 9; // Documento
-                                oworksheet.get_Range(Letras[numcol] + linhastr, Letras[numcol] + linhastr).Value2 = tdoc;
-                                linhas += 1;
-                            }
-
-                        }
-                        catch (Exception)
-                        {
-                            throw;
-                        }
-
-
-
-                        oWorkbook.SaveAs(SaveFileDialog1.FileName, Microsoft.Office.Interop.Excel.XlFileFormat.xlWorkbookNormal,
-                      "", "", false, false, Microsoft.Office.Interop.Excel.XlSaveAsAccessMode.xlShared,
-                       Microsoft.Office.Interop.Excel.XlSaveConflictResolution.xlUserResolution, true, "", "", false);
-
+                        ws.Cells[row, 7].Value = thist;
+                        ws.Cells[row, 10].Value = tdoc;
+                        row++;
                     }
-                    catch (Exception E)
-                    {
-                        MessageBox.Show("Erro ao tentar abrir tabela Excel "+E.Message, "",
-                        MessageBoxButtons.OKCancel, MessageBoxIcon.Asterisk);
-                        return;
-                    }
+
+                    pkg.Save();
                 }
-                finally
-                {
-                    //oWor;
-                    if (ExcelObj != null)
-                    {
-                        ExcelObj.Quit();
-                        MessageBox.Show("Excel " + SaveFileDialog1.FileName + " Gravado Ok");
-                    }
 
-                    Cursor.Current = Cursors.Default;
-                }
+                MessageBox.Show("Excel " + filename + " gravado OK.");
+            }
+            catch (Exception E)
+            {
+                MessageBox.Show("Erro ao gerar planilha Excel: " + E.Message,
+                    "Erro export FinVauche", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
             }
         }
 
