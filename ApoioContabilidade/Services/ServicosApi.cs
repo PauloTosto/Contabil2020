@@ -1,4 +1,5 @@
 ﻿using ApoioContabilidade.Core;
+using ApoioContabilidade.Services;
 using Newtonsoft.Json;
 using System;
 using System.CodeDom;
@@ -12,7 +13,6 @@ using System.Net.Http.Headers;
 using System.Security.Policy;
 using System.Threading.Tasks;
 using System.Web;
-using System.Windows.Forms;
 
 namespace ApoioContabilidade.Models
 {
@@ -37,7 +37,7 @@ namespace ApoioContabilidade.Models
             string host = TestaConexao.ReturnHost(ConexaoAtual.SERVIDOR_IP.ToUpper());
             if (host == "")
             {
-                MessageBox.Show("Host não Localizado");
+                ApiErrorReporter.Report("Host não Localizado");
                 return odataset;
             }
 
@@ -63,7 +63,7 @@ namespace ApoioContabilidade.Models
             catch (Exception)
             {
 
-                MessageBox.Show("Erro Acesso Servidor");
+                ApiErrorReporter.Report("Erro Acesso Servidor");
             }
             return odataset;
         }
@@ -93,7 +93,7 @@ namespace ApoioContabilidade.Models
             string host = TestaConexao.ReturnHost(ConexaoAtual.SERVIDOR_IP.ToUpper());
             if (host == "")
             {
-                MessageBox.Show("Host não Localizado");
+                ApiErrorReporter.Report("Host não Localizado");
                 return odataset;
             }
             var builder = new UriBuilder("http://" + host + ":5000/api/SelectML/SP?");
@@ -117,7 +117,7 @@ namespace ApoioContabilidade.Models
             }
             catch (Exception)
             {
-                MessageBox.Show("Erro Acesso Servidor");
+                ApiErrorReporter.Report("Erro Acesso Servidor");
 
             }
             return odataset;
@@ -141,7 +141,7 @@ namespace ApoioContabilidade.Models
             string host = TestaConexao.ReturnHost(ConexaoAtual.SERVIDOR_IP.ToUpper());
             if (host == "")
             {
-                MessageBox.Show("Host não Localizado");
+                ApiErrorReporter.Report("Host não Localizado");
                 return odataset;
             }
             var builder = new UriBuilder("http://" + host + ":5000/api/SelectML/SP?");
@@ -165,7 +165,7 @@ namespace ApoioContabilidade.Models
             }
             catch (Exception)
             {
-                MessageBox.Show("Erro Acesso Servidor");
+                ApiErrorReporter.Report("Erro Acesso Servidor");
 
             }
             return odataset;
@@ -224,7 +224,7 @@ namespace ApoioContabilidade.Models
                 }
                 catch (Exception E)
                 {
-                    MessageBox.Show("Erro configurar Dataset");
+                    ApiErrorReporter.Report("Erro configurar Dataset", E);
                     throw;
                 }
             }
@@ -272,7 +272,7 @@ namespace ApoioContabilidade.Models
                                     }
                                     catch (Exception E)
                                     {
-                                        MessageBox.Show("Erro ao TRansformar DateTime " + E.Message);
+                                        ApiErrorReporter.Report("Erro ao TRansformar DateTime " + E.Message, E);
                                         throw;
 
                                     }
@@ -417,7 +417,7 @@ namespace ApoioContabilidade.Models
                     }
                     catch (Exception E)
                     {
-                        MessageBox.Show("Erro Conversão Dados " + E.Message);
+                        ApiErrorReporter.Report("Erro Conversão Dados " + E.Message, E);
                         throw;
                     }
                 }
@@ -431,7 +431,7 @@ namespace ApoioContabilidade.Models
             string host = TestaConexao.ReturnHost(ConexaoAtual.SERVIDOR_IP.ToUpper());
             if (host == "")
             {
-                MessageBox.Show("Host não Localizado");
+                ApiErrorReporter.Report("Host não Localizado");
                 return retorno;
             }
             string uri = "http://" + host + ":5000";
@@ -600,13 +600,13 @@ namespace ApoioContabilidade.Models
 
                 if (dsRetorno_Campos.Tables.Count != orows.Length)
                 {
-                    MessageBox.Show("Erro ao COLAR registros");
+                    ApiErrorReporter.Report("Erro ao COLAR registros");
                     return false;
                 }
             }
             catch (Exception)
             {
-                MessageBox.Show("Erro ao COLAR registros");
+                ApiErrorReporter.Report("Erro ao COLAR registros");
                 return false;
             }
             result = true;
@@ -647,7 +647,7 @@ namespace ApoioContabilidade.Models
             }
             catch (Exception)
             {
-                MessageBox.Show("Erro Gravar  registros");
+                ApiErrorReporter.Report("Erro Gravar  registros");
                 return result;
             }
             
@@ -671,13 +671,13 @@ namespace ApoioContabilidade.Models
 
                 if (dsRetorno_Campos.Tables.Count == 0)
                 {
-                    MessageBox.Show("Erro ao Incluir registro");
+                    ApiErrorReporter.Report("Erro ao Incluir registro");
                     return false;
                 }
             }
             catch (Exception)
             {
-                MessageBox.Show("Erro ao Incluir registro");
+                ApiErrorReporter.Report("Erro ao Incluir registro");
                 return false;
             }
             result = true;

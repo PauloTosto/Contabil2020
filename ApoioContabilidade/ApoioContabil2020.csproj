@@ -772,6 +772,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="Services\FindDiretorios.cs" />
+    <Compile Include="Services\ApiErrorReporter.cs" />
     <Compile Include="Services\ServicosApi.cs" />
     <Compile Include="Services\TabelasIniciais.cs" />
     <Compile Include="TDataControlContab.cs" />
