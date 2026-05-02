@@ -421,7 +421,10 @@ namespace ClassConexao//ClassLibTrabalho//WFAEstatiscaTrabalho
             }
             catch (Exception E)
             {
-                throw new Exception("Erro leitura Excel");
+                // Preserva mensagem original e InnerException para diagnostico.
+                // Causa comum: provider Microsoft.ACE.OLEDB.12.0 32-bit nao instalado
+                // (precisa AccessDatabaseEngine_X86.exe quando o app roda em x86).
+                throw new Exception("Erro leitura Excel: " + E.Message, E);
             }
 
         }
