@@ -3,6 +3,7 @@ using ApoioContabilidade.Services;
 using ApoioContabilidade.Trabalho.Imprimir;
 using ClassConexao;
 using ClassFiltroEdite;
+using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -734,22 +735,15 @@ namespace ApoioContabilidade.Trabalho
                                   'L','M','N','O','P','Q','R','S','T','U'};
 
         */
-        private void PonhaNoReciboExcel(Microsoft.Office.Interop.Excel._Worksheet oworksheet,
-                  int tiponum,string letra, object valor )
+        // Helper: escreve o mesmo valor em duas posicoes da via 1 e via 2 do recibo.
+        // O recibo tem duas vias verticalmente -- via 2 fica 39 linhas abaixo da via 1.
+        // letra eh A-J (single char), tiponum eh a linha da via 1.
+        private static void PonhaNoReciboExcel(ExcelWorksheet ws, int tiponum, string letra, object valor)
         {
-            int linha = 0;
-           // int tiponum = 6; // 
-            int via2 = 39;
-            int via1 = linha + tiponum;
-            string linhaStr = via1.ToString();
-            var range = oworksheet.get_Range(letra + linhaStr, letra + linhaStr);
-            range.FormulaR1C1 = valor;
-            via1 = linha + tiponum + via2;
-            linhaStr = via1.ToString();
-
-            range = oworksheet.get_Range(letra + linhaStr, letra + linhaStr);
-            range.FormulaR1C1 =valor;
-
+            const int via2 = 39;
+            int col = letra[0] - 'A' + 1; // EPPlus 1-indexed
+            ws.Cells[tiponum, col].Value = valor;
+            ws.Cells[tiponum + via2, col].Value = valor;
         }
 
         private void btnRecibos_Click(object sender, EventArgs e)
@@ -758,177 +752,117 @@ namespace ApoioContabilidade.Trabalho
             filename = filename.Replace("/", "_");
 
             saveFileDialog1.FileName = filename;
-            saveFileDialog1.DefaultExt = "xls";
-            saveFileDialog1.Filter = "Planilha Excel (.xls)|*.xls|Todos Arquivos|*.*";
+            saveFileDialog1.DefaultExt = "xlsx";
+            saveFileDialog1.Filter = "Planilha Excel (*.xlsx)|*.xlsx|Todos Arquivos|*.*";
 
-            if (saveFileDialog1.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            if (saveFileDialog1.ShowDialog() != DialogResult.OK) return;
+
+            string tarquivo = saveFileDialog1.FileName;
+            if (!tarquivo.ToLower().EndsWith(".xlsx")) tarquivo += ".xlsx";
+
+            // Copia o template embedded para o destino e abre via EPPlus.
+            byte[] copiaBytes = Properties.Resources.Modelo_recibo_de_pagamento_de_salario;
+            File.WriteAllBytes(tarquivo, copiaBytes);
+            Cursor.Current = Cursors.WaitCursor;
+
+            try
             {
-                string tarquivo = saveFileDialog1.FileName;
-                byte[] copiaBytes = Properties.Resources.Modelo_recibo_de_pagamento_de_salario;
-                File.WriteAllBytes(tarquivo, copiaBytes);
-                Cursor.Current = Cursors.WaitCursor;
-                Microsoft.Office.Interop.Excel.Application ExcelObj = new Microsoft.Office.Interop.Excel.Application();
-
-                try
+                using (var pkg = new ExcelPackage(new FileInfo(tarquivo)))
                 {
-                    if (ExcelObj == null)
-                    {
-                        MessageBox.Show("ERROR: EXCEL não pôde ser iniciado!");
-                        return;
-                    }
-                    // ExcelObj.Visible = true;
-
-                    /*Microsoft.Office.Interop.Excel.Workbook oWorkbook =
-                        ExcelObj.Workbooks.Add(Microsoft.Office.Interop.Excel.XlWBATemplate.xlWBATWorksheet);
-
-                    Microsoft.Office.Interop.Excel.Range Oget_Range;
-                    try
-                    */
-                    Microsoft.Office.Interop.Excel.Workbook oWorkbook = ExcelObj.Workbooks.Open(tarquivo, Type.Missing, false, Type.Missing, "", "",
-                        Type.Missing, Type.Missing
-                        , Type.Missing, Type.Missing
-                        , Type.Missing, Type.Missing, true, Type.Missing, Type.Missing);
-                    Microsoft.Office.Interop.Excel.Sheets sheets = oWorkbook.Sheets;
                     int pos = bmFolha.Position;
                     bmFolha.MoveFirst();
-                    int CurrentRow = 1;
-                    int ind1 = 1;
-                    while (CurrentRow < bmFolha.Count)
+
+                    // Nome da primeira sheet do template (modelo).
+                    string nomeTemplate = pkg.Workbook.Worksheets[1].Name;
+
+                    // Clona a sheet template (bmFolha.Count - 1) vezes, dando nomes provisorios
+                    // que sao substituidos pelos nomes dos trabalhadores no segundo loop.
+                    for (int i = 1; i < bmFolha.Count; i++)
                     {
-                        var before = sheets.get_Item(ind1);
-                        (sheets.get_Item(1) as Microsoft.Office.Interop.Excel.Worksheet).Copy(before, Type.Missing);
-                        ind1++;
-                        CurrentRow++;
-                       // bmFolha.MoveNext();
+                        pkg.Workbook.Worksheets.Copy(nomeTemplate, "_temp_" + i);
                     }
-                   // bmFolha.MoveFirst();
-                    CurrentRow = 0;
 
-                    ind1 = 0;
-                    while (CurrentRow < bmFolha.Count)
+                    // Preenche cada sheet com os dados do trabalhador correspondente.
+                    int sheetIdx = 0;
+                    int currentRow = 0;
+                    while (currentRow < bmFolha.Count)
                     {
-                        ind1++;
+                        sheetIdx++;
                         DataRowView orow = (bmFolha.Current as DataRowView);
-                        Microsoft.Office.Interop.Excel._Worksheet oworksheet = (sheets.get_Item(ind1) as Microsoft.Office.Interop.Excel.Worksheet);
-                        oworksheet.Name = orow["NOME"].ToString().Substring(0, 15);
-                        PonhaNoReciboExcel(oworksheet, 11, "C", orow["NOME"].ToString().Trim());
+                        ExcelWorksheet ws = pkg.Workbook.Worksheets[sheetIdx];
+                        ws.Name = orow["NOME"].ToString().Substring(0, 15);
 
-                        /*int linha = 0;
-                        int via1 = 0;
-                        int via2 = 39;
-                        int tiponum = 11; // nome
-                        string letra = "C";
-                        via1 = linha + tiponum;
-                        string linhaStr = via1.ToString();
-                        var range = oworksheet.get_Range(letra + linhaStr, letra + linhaStr);
-                        range.FormulaR1C1 = orow["NOME"].ToString();
-                        via1 = linha + tiponum + via2;
-                        linhaStr = via1.ToString();
-                        range = oworksheet.get_Range(letra + linhaStr, letra + linhaStr);
-                        range.FormulaR1C1 = orow["NOME"].ToString();*/
-                        // Data
-                        PonhaNoReciboExcel(oworksheet, 6, "J", dtData1.Value.ToString("MMMM/yyyy"));
-                        // CBO  
-                        PonhaNoReciboExcel(oworksheet, 11, "H", Math.Truncate(Convert.ToDouble(orow["CBO"])));
-                        // Categoria
-                        PonhaNoReciboExcel(oworksheet, 11, "I", orow["CATEGORIA"].ToString());
-                        // salario
-                        PonhaNoReciboExcel(oworksheet, 16, "H", Math.Truncate(Convert.ToDouble(orow["HX"]) / 8));
+                        PonhaNoReciboExcel(ws, 11, "C", orow["NOME"].ToString().Trim());
+                        PonhaNoReciboExcel(ws, 6, "J", dtData1.Value.ToString("MMMM/yyyy"));
+                        PonhaNoReciboExcel(ws, 11, "H", Math.Truncate(Convert.ToDouble(orow["CBO"])));
+                        PonhaNoReciboExcel(ws, 11, "I", orow["CATEGORIA"].ToString());
+                        PonhaNoReciboExcel(ws, 16, "H", Math.Truncate(Convert.ToDouble(orow["HX"]) / 8));
 
                         double salconf = 0;
-                        double CalcSalbase = 0;
                         double SALARIO = Convert.ToDouble(orow["SALARIO"]);
                         double tpercconf = Convert.ToDouble(orow["PERCCONF"]);
                         if (tpercconf != 0)
                         {
-                            CalcSalbase = Math.Round(SALARIO / (1 + (tpercconf / 100)), 2);
+                            double CalcSalbase = Math.Round(SALARIO / (1 + (tpercconf / 100)), 2);
                             salconf = SALARIO - CalcSalbase;
                             SALARIO = CalcSalbase;
-
                         }
+                        PonhaNoReciboExcel(ws, 16, "I", SALARIO);
+                        PonhaNoReciboExcel(ws, 17, "H", Convert.ToDouble(orow["HXA"]));
+                        PonhaNoReciboExcel(ws, 17, "I", Convert.ToDouble(orow["VLR_HXA"]));
 
-                        PonhaNoReciboExcel(oworksheet, 16, "I", SALARIO);
-
-                        PonhaNoReciboExcel(oworksheet, 17, "H", Convert.ToDouble(orow["HXA"]));
-
-                        PonhaNoReciboExcel(oworksheet, 17, "I", Convert.ToDouble(orow["VLR_HXA"]));
-
-                        double vlr_dom = 0;
-                        double vlr_fer = 0;
-                        double horas_dom = 0;
-                        double horas_fer = 0;
+                        double vlr_dom = 0, vlr_fer = 0, horas_dom = 0, horas_fer = 0;
                         if (Convert.ToDouble(orow["VLR_HXS"]) > 0)
                         {
                             vlr_dom = Convert.ToDouble(orow["VLR_DOM"]);
                             vlr_fer = Convert.ToDouble(orow["VLR_FER"]);
                             horas_dom = Convert.ToDouble(orow["HORAS_DOM"]);
                             horas_fer = Convert.ToDouble(orow["HORAS_FER"]);
-
                         }
-                        PonhaNoReciboExcel(oworksheet, 18, "H", horas_dom);
-                        PonhaNoReciboExcel(oworksheet, 19, "H", horas_fer);
-                        PonhaNoReciboExcel(oworksheet, 18, "I", vlr_dom);
-                        PonhaNoReciboExcel(oworksheet, 19, "I", vlr_fer);
-                        // ADICIONAL NOTURNO
-                        PonhaNoReciboExcel(oworksheet, 20, "I", Convert.ToDouble(orow["VLR_HXN"]));
-                        // SALARIO FAMILIA
-                        PonhaNoReciboExcel(oworksheet, 21, "I", Convert.ToDouble(orow["SALFAM"]));
-                        // Desconto taxa INSS Literal
+                        PonhaNoReciboExcel(ws, 18, "H", horas_dom);
+                        PonhaNoReciboExcel(ws, 19, "H", horas_fer);
+                        PonhaNoReciboExcel(ws, 18, "I", vlr_dom);
+                        PonhaNoReciboExcel(ws, 19, "I", vlr_fer);
+                        PonhaNoReciboExcel(ws, 20, "I", Convert.ToDouble(orow["VLR_HXN"])); // ADICIONAL NOTURNO
+                        PonhaNoReciboExcel(ws, 21, "I", Convert.ToDouble(orow["SALFAM"])); // SALARIO FAMILIA
+
                         string descontotaxa = "Desconto INSS(" + orow["TXINSS"].ToString().Trim() + ")";
-                        PonhaNoReciboExcel(oworksheet, 22, "C", descontotaxa);
-                        // Desconto INSS
-                        PonhaNoReciboExcel(oworksheet, 22, "J", Convert.ToDouble(orow["INSS"]));
-                        // IRRF
-                        PonhaNoReciboExcel(oworksheet, 23, "J", Convert.ToDouble(orow["IRFONTE"]));
+                        PonhaNoReciboExcel(ws, 22, "C", descontotaxa);
+                        PonhaNoReciboExcel(ws, 22, "J", Convert.ToDouble(orow["INSS"]));
+                        PonhaNoReciboExcel(ws, 23, "J", Convert.ToDouble(orow["IRFONTE"])); // IRRF
+                        PonhaNoReciboExcel(ws, 24, "J", Convert.ToDouble(orow["ADIANT"])); // ADIANT
+                        PonhaNoReciboExcel(ws, 25, "J", Convert.ToDouble(orow["ISIND"])); // IMPOSTO SINDICAL
+                        PonhaNoReciboExcel(ws, 26, "I", salconf); // Adicional cargo de confianca
 
-                        // ADIANT
-                        PonhaNoReciboExcel(oworksheet, 24, "J", Convert.ToDouble(orow["ADIANT"]));
-                        // IMPOSTO SINDICAL
-                        PonhaNoReciboExcel(oworksheet, 25, "J", Convert.ToDouble(orow["ISIND"]));
-                        // Adicional cargo de confiança
-                        PonhaNoReciboExcel(oworksheet, 26, "I", salconf);
+                        PonhaNoReciboExcel(ws, 37, "B", Convert.ToDouble(orow["SALARIOATUAL"]));
+                        double salbruto = Convert.ToDouble(orow["SALARIO"])
+                                          + Convert.ToDouble(orow["VLR_HXA"])
+                                          + Convert.ToDouble(orow["VLR_HXN"])
+                                          + Convert.ToDouble(orow["VLR_HXS"]);
+                        PonhaNoReciboExcel(ws, 37, "D", salbruto); // SALTETO salcontribuicao inss
+                        PonhaNoReciboExcel(ws, 37, "E", salbruto); // SALBRUTO
+                        PonhaNoReciboExcel(ws, 37, "G", Convert.ToDouble(orow["FGTS"])); // FGTS
+                        PonhaNoReciboExcel(ws, 37, "I", Convert.ToDouble(orow["BASEIRF"])); // BASE_IRRF
 
-                        PonhaNoReciboExcel(oworksheet, 37, "B", Convert.ToDouble(orow["SALARIOATUAL"]));
-                        // SALTETO salcontribuicao inss
-                        PonhaNoReciboExcel(oworksheet, 37, "D",
-                            Convert.ToDouble(orow["SALARIO"])
-                            + Convert.ToDouble(orow["VLR_HXA"])
-                            + Convert.ToDouble(orow["VLR_HXN"])
-                              + Convert.ToDouble(orow["VLR_HXS"])
-                            );
-                        // SALBRUTO
-                        PonhaNoReciboExcel(oworksheet, 37, "E",
-                            Convert.ToDouble(orow["SALARIO"])
-                            + Convert.ToDouble(orow["VLR_HXA"])
-                            + Convert.ToDouble(orow["VLR_HXN"])
-                              + Convert.ToDouble(orow["VLR_HXS"])
-                            );
-
-                        // FGTS
-                        PonhaNoReciboExcel(oworksheet, 37, "G",
-                            Convert.ToDouble(orow["FGTS"]));
-
-                        // BASE_IRRF
-                        PonhaNoReciboExcel(oworksheet, 37, "I",
-                            Convert.ToDouble(orow["BASEIRF"]));
-
-                        CurrentRow++;
+                        currentRow++;
                         bmFolha.MoveNext();
                     }
                     bmFolha.Position = pos;
 
-                        (sheets.get_Item(1) as Microsoft.Office.Interop.Excel.Worksheet).Activate();
-                    oWorkbook.Save();
-                    oWorkbook.Close();
-                    ExcelObj.Quit();
-                    MessageBox.Show("Excel Salvo");
+                    pkg.Workbook.View.ActiveTab = 0;
+                    pkg.Save();
                 }
-                catch (Exception E)
-                {
-                    MessageBox.Show("Erro " + E.Message);
-                    return;
 
-                }
+                MessageBox.Show("Excel Salvo");
+            }
+            catch (Exception E)
+            {
+                MessageBox.Show("Erro " + E.Message);
+                return;
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
             }
         }
     }

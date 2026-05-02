@@ -125,7 +125,7 @@
     <value>..\Imagens\ImagemMLSA_reduzida2.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Modelo_recibo_de_pagamento_de_salario" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Trabalho\Padrao_Excel\Modelo recibo de pagamento de salario.xls;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>..\Trabalho\Padrao_Excel\Modelo recibo de pagamento de salario.xlsx;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="M_Libanio___logotipo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Imagens\M Libanio - logotipo.JPG;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
