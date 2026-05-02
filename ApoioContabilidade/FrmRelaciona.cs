@@ -13,7 +13,6 @@ using ApoioContabilidade.Models;
 using ApoioContabilidade.Excel;
 using ApoioContabilidade.ZContabAlterData;
 using static ApoioContabilidade.ZContabAlterData.Utils.BalanceteClass;
-using Microsoft.Office.Interop.Excel;
 
 namespace ApoioContabilidade
 {

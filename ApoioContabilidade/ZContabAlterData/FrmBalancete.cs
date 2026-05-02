@@ -2,7 +2,6 @@
 using ApoioContabilidade.Models;
 using ClassConexao;
 using ClassFiltroEdite;
-using Microsoft.Office.Interop.Excel;
 using Microsoft.Reporting.Map.WebForms.BingMaps;
 using System;
 using System.Collections.Generic;

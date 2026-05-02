@@ -16,7 +16,8 @@ ou geram dados auxiliares.
 
 - **.NET Framework 4.8** + Windows Forms (não é .NET Core/8).
 - C# `LangVersion=7.3` em algumas configs (legado).
-- `Microsoft.Office.Interop.Excel` 15.0 — depende de Excel instalado para o export.
+- **EPPlus 4.5.3.3** (LGPL) — gera os XLSX de export. Antes era `Microsoft.Office.Interop.Excel` 15.0 (que ainda existe como dependência **só** por causa de `FrmRelTrabalhista.btnRecibos_Click`, que abre um template `.xls` embedded — migrar exigiria converter o template `.xls` → `.xlsx` manualmente).
+- **Leitura de planilha** (RELACIONA Excel) usa `Microsoft.ACE.OLEDB.12.0` (precisa `AccessDatabaseEngine_X86.exe` instalado quando o app roda em x86).
 - `VFPOLEDB.1` (COM) — exige build x86 ou ambiente com driver 32-bit.
 - HTTP API local em `http://<servidor>:5000/api/SelectML/...` (out-of-tree).
 - `packages.config` (NuGet legado, não `PackageReference`).
@@ -127,6 +128,10 @@ Outros projetos consomem a mesma API — **não mudar contrato sem coordenar com
 
 - O caminho de import de `RELACIONA.DBF` é exclusivamente via `FrmRelaciona.btnImporta_Click` ([FrmRelaciona.cs](ApoioContabilidade/FrmRelaciona.cs)) — abrir o Excel com a planilha `PESQUISA` dentro.
 - O submenu **Cadastro de Contas** (`cadastroDeContasToolStripMenuItem`) está vazio e com `Visible=false` desde a remoção do `FrmPlaconRelaciona`. Pode ser removido em limpeza futura.
+
+## Pendências de migração
+
+- **`FrmRelTrabalhista.btnRecibos_Click`** ainda usa `Microsoft.Office.Interop.Excel`. Ele abre um template `.xls` embedded como recurso (`Properties.Resources.Modelo_recibo_de_pagamento_de_salario`), clona a planilha N vezes e preenche cells. EPPlus 4.5.x só lida com `.xlsx` — para migrar, precisa primeiro converter o template `.xls` → `.xlsx` manualmente no Excel, salvar como recurso, e reescrever o método para EPPlus. Enquanto isso, a referência `Microsoft.Office.Interop.Excel` permanece no `.csproj`.
 
 ## Build
 
