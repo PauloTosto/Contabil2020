@@ -1103,9 +1103,14 @@ namespace ClassFiltroEdite
                     if (tituloExcel != "")
                         ws.Cells[linha, colTitulo].Value = tituloExcel;
 
+                    // Original do Excel Interop comecava todo o conteudo (cabecalho/dados/totais)
+                    // em Letras[1] = coluna B, deixando coluna A como margem visual.
+                    // Em EPPlus 1-indexed, isso eh col=2.
+                    const int colInicio = 2;
+
                     // Cabecalho na linha linhasinicio
                     linha = linhasinicio;
-                    int col = 1;
+                    int col = colInicio;
                     Type tipo = null;
                     foreach (Campo campo in LinhasCampo)
                     {
@@ -1143,7 +1148,7 @@ namespace ClassFiltroEdite
                     linha += 1;
                     foreach (DataRowView orow in odataview)
                     {
-                        col = 1;
+                        col = colInicio;
                         foreach (Campo campo in LinhasCampo)
                         {
                             object dado = "";
@@ -1183,10 +1188,10 @@ namespace ClassFiltroEdite
 
                     if (ssTotal != null)
                     {
-                        col = 1;
+                        col = colInicio;
                         foreach (Campo campo in LinhasCampo)
                         {
-                            if (col == 1) ws.Cells[linha, col].Value = "TOTAIS";
+                            if (col == colInicio) ws.Cells[linha, col].Value = "TOTAIS";
                             if (!campo.soma) { col += 1; continue; }
                             if (campo.format != "")
                                 ws.Cells[linha, col].Style.Numberformat.Format = campo.format;
@@ -1199,10 +1204,10 @@ namespace ClassFiltroEdite
 
                     if (ssTotalGeral != null)
                     {
-                        col = 1;
+                        col = colInicio;
                         foreach (Campo campo in LinhasCampo)
                         {
-                            if (col == 1) ws.Cells[linha, col].Value = "TOT.GERAL";
+                            if (col == colInicio) ws.Cells[linha, col].Value = "TOT.GERAL";
                             if (!campo.soma) { col += 1; continue; }
                             if (campo.format != "")
                                 ws.Cells[linha, col].Style.Numberformat.Format = campo.format;
@@ -1213,9 +1218,11 @@ namespace ClassFiltroEdite
                         linha += 1;
                     }
 
-                    // Borda no bloco inteiro
-                    int colFim = LinhasCampo.Count;
-                    ws.Cells[linhasinicio, 1, linhasmax, colFim].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                    // Grade completa no bloco (Top+Bottom+Left+Right em cada celula).
+                    // Replica o que o Excel Interop fazia com Range.Borders.LineStyle = xlContinuous,
+                    // que aplicava bordas em todas as celulas (incluindo as internas).
+                    int colFim = colInicio + LinhasCampo.Count - 1;
+                    AplicarGrade(ws.Cells[linhasinicio, colInicio, linhasmax, colFim], ExcelBorderStyle.Thin);
 
                     pkg.Save();
                 }
@@ -1497,10 +1504,21 @@ namespace ClassFiltroEdite
             }
             if (numcol_inicio != numcol)
             {
-                ws.Cells[linhas_inicio, numcol_inicio, linhas_inicio, numcol - 1]
-                    .Style.Border.BorderAround(ExcelBorderStyle.Thin);
+                AplicarGrade(ws.Cells[linhas_inicio, numcol_inicio, linhas_inicio, numcol - 1],
+                    ExcelBorderStyle.Thin);
             }
             return numcol;
+        }
+
+        // Helper: aplica grade completa (todas as 4 bordas em todas as celulas do range).
+        // Em Excel Interop equivale a Range.Borders.LineStyle = xlContinuous; em EPPlus
+        // BorderAround so desenha as 4 bordas externas, perdendo a divisao visual entre celulas.
+        private static void AplicarGrade(OfficeOpenXml.ExcelRange range, ExcelBorderStyle estilo)
+        {
+            range.Style.Border.Top.Style = estilo;
+            range.Style.Border.Bottom.Style = estilo;
+            range.Style.Border.Left.Style = estilo;
+            range.Style.Border.Right.Style = estilo;
         }
 
 

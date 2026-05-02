@@ -477,9 +477,13 @@ namespace ApoioContabilidade.Trabalho
 
             int linhasretorno = linha;
 
-            // Borda em volta do bloco
-            ws.Cells[linhasinicio + 1, 1, linhasmax + 1, oPonto.LinhasCampo.Count]
-                .Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            // Grade completa (Top+Bottom+Left+Right em todas as celulas)
+            // Replica Range.Borders.LineStyle = xlContinuous do Excel Interop.
+            var rangeGrade = ws.Cells[linhasinicio + 1, 1, linhasmax + 1, oPonto.LinhasCampo.Count];
+            rangeGrade.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Right.Style = ExcelBorderStyle.Thin;
             return linhasretorno;
         }
 
@@ -519,8 +523,12 @@ namespace ApoioContabilidade.Trabalho
                 linha += 1;
             }
 
-            // Borda
-            ws.Cells[linhasinicio + 1, 1, linhasmax + 1, 2].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            // Grade completa (Top+Bottom+Left+Right em todas as celulas)
+            var rangeGrade = ws.Cells[linhasinicio + 1, 1, linhasmax + 1, 2];
+            rangeGrade.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Right.Style = ExcelBorderStyle.Thin;
         }
 
 

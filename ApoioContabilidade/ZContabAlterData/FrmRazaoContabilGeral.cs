@@ -362,9 +362,14 @@ namespace ApoioContabilidade.ZContabAlterData
 
             int linhasretorno = linha;
 
-            // Borda em volta do bloco inteiro
+            // Grade completa (replica Range.Borders.LineStyle = xlContinuous do Excel Interop,
+            // que aplicava bordas em todas as celulas, nao apenas as externas).
             int colFim = oRazao.LinhasCampo.Count;
-            ws.Cells[linhasinicio, 1, linhasmax + 1, colFim].Style.Border.BorderAround(ExcelBorderStyle.Thin);
+            var rangeGrade = ws.Cells[linhasinicio, 1, linhasmax + 1, colFim];
+            rangeGrade.Style.Border.Top.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Left.Style = ExcelBorderStyle.Thin;
+            rangeGrade.Style.Border.Right.Style = ExcelBorderStyle.Thin;
             return linhasretorno;
         }
 
