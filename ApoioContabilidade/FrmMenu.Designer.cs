@@ -52,6 +52,7 @@
             this.cadastroDeContasToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.trabalhoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.cltCodigoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cLTPONTOToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.testeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.relatórioToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -255,6 +256,7 @@
             // 
             this.trabalhoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripMenuItem2,
+            this.cltCodigoToolStripMenuItem,
             this.cLTPONTOToolStripMenuItem,
             this.testeToolStripMenuItem,
             this.relatórioToolStripMenuItem,
@@ -269,7 +271,14 @@
             this.toolStripMenuItem2.Size = new System.Drawing.Size(246, 26);
             this.toolStripMenuItem2.Text = "Cadastro";
             this.toolStripMenuItem2.Click += new System.EventHandler(this.toolStripMenuItem2_Click);
-            // 
+            //
+            // cltCodigoToolStripMenuItem
+            //
+            this.cltCodigoToolStripMenuItem.Name = "cltCodigoToolStripMenuItem";
+            this.cltCodigoToolStripMenuItem.Size = new System.Drawing.Size(246, 26);
+            this.cltCodigoToolStripMenuItem.Text = "Códigos de Apontamento";
+            this.cltCodigoToolStripMenuItem.Click += new System.EventHandler(this.cltCodigoToolStripMenuItem_Click);
+            //
             // cLTPONTOToolStripMenuItem
             // 
             this.cLTPONTOToolStripMenuItem.Name = "cLTPONTOToolStripMenuItem";
@@ -379,6 +388,7 @@
         private System.Windows.Forms.ToolStripMenuItem configuraXMLToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem notasFiscaisToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem trabalhoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cltCodigoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cLTPONTOToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem testeToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem produçãoToolStripMenuItem;

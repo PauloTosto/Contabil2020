@@ -15,9 +15,10 @@ namespace ApoioContabilidade
         public Dictionary<string, string> ListaCaminhos; 
         public WinFrmConfigura()
         {
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + "ConfigServidor.txt"))
+            // B8 fix 2026-05-08: AppPaths.GetConfigPath em vez de concat de enum.
+            if (File.Exists(AppPaths.GetConfigPath("ConfigServidor.txt")))
             {
-                ListaCaminhos = AcessosStream.LeiaLista(Environment.SpecialFolder.LocalApplicationData + "ConfigServidor.txt");
+                ListaCaminhos = AcessosStream.LeiaLista(AppPaths.GetConfigPath("ConfigServidor.txt"));
                 servidor = ListaCaminhos["SERVIDOR_IP"];
 
             }
@@ -36,7 +37,7 @@ namespace ApoioContabilidade
             
             ListaCaminhos["SERVIDOR_IP"] = servidor;
             
-            AcessosStream.WriteLista(Environment.SpecialFolder.LocalApplicationData + "ConfigServidor.txt",ListaCaminhos);
+            AcessosStream.WriteLista(AppPaths.GetConfigPath("ConfigServidor.txt"), ListaCaminhos);
                 
         }
 

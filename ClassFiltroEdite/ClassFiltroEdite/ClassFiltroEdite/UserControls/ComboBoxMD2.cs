@@ -11,6 +11,20 @@ using System.Windows.Forms;
 
 namespace ClassFiltroEdite.UserControls
 {
+    /// <summary>
+    /// Cascata Pai → Filho de combos hardcoded para o par <c>NUM_MOD → CODSER</c>
+    /// (modelo de apontamento → serviço). Aparece em ~22 lugares deste arquivo.
+    ///
+    /// R4 (2026-05-11): considerada generalização para receber
+    /// <c>FieldNamePai</c>/<c>FieldNameFilho</c> via property — REJEITADA por
+    /// agora. Razões:
+    ///   1. Zero caso de uso ativo para cascata com campos diferentes.
+    ///   2. DLL compartilhada com outros projetos (ApiPaceiro_C, etc.) — mudança
+    ///      especulativa pode quebrar consumers fora deste tree.
+    ///   3. Sem testes funcionais; 22 substituições têm chance alta de regressão
+    ///      no caminho atual (FrmCltPonto), que foi validado em R1/R5.
+    /// Princípio: YAGNI. Generalizar quando o segundo caso aparecer.
+    /// </summary>
     public partial class ComboBoxMD2 : UserControl
     {
 
@@ -509,18 +523,19 @@ namespace ClassFiltroEdite.UserControls
             if (suspendeValidate) return;
             string texto = ((ComboBox)sender).Text;
 
-            string selectedtexto = ((ComboBox)sender).SelectedText.Trim();
-
-            if ((((ComboBox)sender).SelectedValue == null) || (texto.Trim() == "")) // || (selectedtexto.Trim() == ""))
+            if ((((ComboBox)sender).SelectedValue == null) || (texto.Trim() == ""))
             {
-                e.Cancel = true;
+                // R5 fix (2026-05-08): NÃO usar `e.Cancel = true` — antes prendia o operador
+                // no campo, impedindo até navegação reversa (Shift+Tab) ou clique em outro
+                // controle. Agora apenas marca erro visual (ErrorProvider) e reverte o valor
+                // pro original; operador pode navegar livre. A validação de obrigatórios
+                // acontece no fluxo de save (BindingSource_Mudou em ArmeEdicao).
                 Error_Set(sender as Control);
-
                 ((ComboBox)sender).DataBindings[0].ReadValue();
             }
             else
             {
-
+                Error_Set(sender as Control, "");
                 string text = ((ComboBox)sender).SelectedText.Trim();
                 if (text.Trim() == "")
                 {
@@ -716,8 +731,10 @@ namespace ClassFiltroEdite.UserControls
                 textopai = ((DataRowView)bind.BindingManagerBase.Current)["NUM_MOD"].ToString();
                 textofilho = ((DataRowView)bind.BindingManagerBase.Current)["CODSER"].ToString();
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
+                // R6 (2026-05-08): antes silencioso. Loga pra diagnóstico.
+                System.Diagnostics.Debug.WriteLine("[ComboBoxMD2.B_BindingCompletePaieFilho] " + ex);
                 return;
             }
 
@@ -812,8 +829,10 @@ namespace ClassFiltroEdite.UserControls
             {
                 texto = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField].ToString();
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
+                // R6 (2026-05-08): antes silencioso. Loga pra diagnóstico.
+                System.Diagnostics.Debug.WriteLine("[ComboBoxMD2.B_BindingCompletePai] " + ex);
                 return;
             }
 
@@ -849,15 +868,14 @@ namespace ClassFiltroEdite.UserControls
 
             Binding bind = (sender as Binding);
             object texto;
-           // object valuePai;
             try
             {
-                //valuePai = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField];
-
                 texto = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField];
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
+                // R6 (2026-05-08): antes silencioso. Loga pra diagnóstico.
+                System.Diagnostics.Debug.WriteLine("[ComboBoxMD2.B_BindingCompleteFilho] " + ex);
                 return;
             }
 

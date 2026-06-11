@@ -1,6 +1,7 @@
 ﻿using ApoioContabilidade.Models;
 using ApoioContabilidade.Services;
 using ApoioContabilidade.Trabalho.ConfigComponentes;
+using ApoioContabilidade.Trabalho.FormsAuxiliar;
 using ApoioContabilidade.Trabalho.FormsPesquisa;
 using ApoioContabilidade.Trabalho.PegDadosCltCad;
 using ApoioContabilidade.Trabalho.ServicesTrab;
@@ -26,6 +27,14 @@ namespace ApoioContabilidade.Trabalho
         public FrmConsultaTrab frmConsultaTrab;
         public bool modelTrabAnterior = false;
         public bool administrador = false;
+
+        // Estado de "desfazer último colar" (Ctrl+Z). Só último nível de undo.
+        // Expira automaticamente quando muda a aba ou o trabalhador (contexto).
+        // Adicionado 2026-05-08.
+        private List<DataRow> _undoColarRows;
+        private DataTable _undoColarTable;
+        private string _undoColarTab;     // nome da TabPage onde foi colado
+        private string _undoColarTrab;    // CODCAD do trabalhador atual no momento
         public FrmCltPonto(ServicoFiltroTrab oevt_Ponto)
         {
             evt_Ponto = oevt_Ponto;
@@ -54,7 +63,6 @@ namespace ApoioContabilidade.Trabalho
             dgvTrabMov.CellFormatting += DgvTrabMov_CellFormatting;
             dgvTrabMovAnt.CellFormatting += DgvTrabMov_CellFormatting;
             dgvNoturno.CellFormatting += DgvTrabMov_CellFormatting;
-            dgvPremio.CellFormatting += DgvTrabMov_CellFormatting;
 
             dgvTrabalhadores.CellFormatting += DgvTrabalhadores_CellFormatting;
 
@@ -67,9 +75,6 @@ namespace ApoioContabilidade.Trabalho
 
             dgvNoturno.Enter += color_Enter;
             dgvNoturno.Leave += color_Leave;
-
-            dgvPremio.Enter += color_Enter;
-            dgvPremio.Leave += color_Leave;
 
 
             dgvTrabalhadores.Enter += color_Enter;
@@ -98,9 +103,6 @@ namespace ApoioContabilidade.Trabalho
             
             evt_Ponto.bmTrabNoturno.DataSource = evt_Ponto.dtTrabNoturno.AsEnumerable().Where(row =>
                      row.IsNull("ID")).AsDataView();
-            // abril 2021
-            evt_Ponto.bmTrabPremio.DataSource = evt_Ponto.dtTrabPremio.AsEnumerable().Where(row =>
-                     row.IsNull("ID")).AsDataView();
 
             evt_Ponto.bmTrabMovAnt.DataSource = evt_Ponto.dtTrabMovAnt.AsEnumerable().Where(row =>
                      row.IsNull("ID")).AsDataView();
@@ -119,10 +121,6 @@ namespace ApoioContabilidade.Trabalho
             comum.oTrabNoturno.oDataGridView = dgvNoturno;
             comum.oTrabNoturno.oDataGridView.DataSource = evt_Ponto.bmTrabNoturno;
 
-            comum.oTrabPremio.oDataGridView = dgvPremio;
-            comum.oTrabPremio.oDataGridView.DataSource = evt_Ponto.bmTrabPremio;
-
-
             comum.oTrabMovAnterior.oDataGridView = dgvTrabMovAnt;
             comum.oTrabMovAnterior.oDataGridView.DataSource = evt_Ponto.bmTrabMovAnt;
 
@@ -130,13 +128,11 @@ namespace ApoioContabilidade.Trabalho
             comum.oTrabMov.ConfigureDBGridView();
             comum.oTrabNoturno.ConfigureDBGridView();
             comum.oTrabMovAnterior.ConfigureDBGridView();
-            comum.oTrabPremio.ConfigureDBGridView();
 
             evt_Ponto.comum = comum;
 
             evt_Ponto.dtTrabMov.TableNewRow += evt_Ponto.DtTrabMov_TableNewRow;
             evt_Ponto.dtTrabNoturno.TableNewRow += evt_Ponto.DtTrabMovNoturno_TableNewRow;
-            evt_Ponto.dtTrabPremio.TableNewRow += evt_Ponto.DtTrabMovPremio_TableNewRow;
 
 
             MonteEdits();
@@ -192,48 +188,47 @@ namespace ApoioContabilidade.Trabalho
                         tsDelete.PerformClick();
                         e.Handled = true;
                         break;
+                    case Keys.Z:
+                        // Só intercepta se há undo de colar disponível;
+                        // senão deixa passar pra undo nativo do controle (TextBox etc).
+                        if (_undoColarRows != null && _undoColarRows.Count > 0)
+                        {
+                            e.Handled = true;
+                            // fire-and-forget: KeyDown não pode ser async direto
+                            _ = DesfazerUltimoColar();
+                        }
+                        break;
                 }
             }
         }
 
         protected override bool ProcessDialogKey(Keys keyData)
         {
-
+            // Bug fix 2026-05-07: o original tinha "if" aninhado duplicado em Alt+D1,
+            // o que fazia Alt+2/3/T nunca funcionarem (eram dead code dentro de outro if).
             if (keyData == (Keys.Alt | Keys.D1))
-                if (keyData == (Keys.Alt | Keys.D1))
-                {
-                    if (tcCltPonto.SelectedIndex == 0)
-                        dgvTrabMov.Focus();
-                    else
-                        tcCltPonto.SelectTab(0);
-                    return true;
-                }
-                else if (keyData == (Keys.Alt | Keys.D2))
-                {
-                    tcCltPonto.SelectTab(1);
-                    return true;
-                }
-                else if (keyData == (Keys.Alt | Keys.D3))
-                {
-                    tcCltPonto.SelectTab(2);
-                    return true;
-                }
-                else if (keyData == (Keys.Alt | Keys.T))
-                {
-                    dgvTrabalhadores.Focus();
-                    return true;
-                }
-            /*else if (keyData == (Keys.ControlKey | Keys.C))
             {
-                tsCopiar.PerformClick();
+                if (tcCltPonto.SelectedIndex == 0)
+                    dgvTrabMov.Focus();
+                else
+                    tcCltPonto.SelectTab(0);
                 return true;
             }
-            else if (keyData == (Keys.ControlKey | Keys.V))
+            else if (keyData == (Keys.Alt | Keys.D2))
             {
-                tsColar.PerformClick();
+                tcCltPonto.SelectTab(1);
                 return true;
-            }*/
-
+            }
+            else if (keyData == (Keys.Alt | Keys.D3))
+            {
+                tcCltPonto.SelectTab(2);
+                return true;
+            }
+            else if (keyData == (Keys.Alt | Keys.T))
+            {
+                dgvTrabalhadores.Focus();
+                return true;
+            }
 
             return base.ProcessDialogKey(keyData);
         }
@@ -298,17 +293,113 @@ namespace ApoioContabilidade.Trabalho
             comum.EdtTrabNoturno.DeletaRegistrosOk += evt_Ponto.Padrao_DeletaRegistrosOk;
             comum.EdtTrabNoturno.AfterDeletaRegistros += evt_Ponto.Padrao_AfterDeletaRegistros;
 
-            // abril 2021
-            ok = comum.MonteEditCltPontoPremio(evt_Ponto.bmTrabPremio);
-            if (!ok) { MessageBox.Show("Erro ao montar Edição Trab Premio"); return; }
-            comum.EdtTrabPremio.BeforeAlteraRegistros += evt_Ponto.DtTrabMov_BeforeAlteraRegistros;
-            comum.EdtTrabPremio.AlteraRegistrosOk += evt_Ponto.DtTrabMov__AlteraRegistrosOk;
-            comum.EdtTrabPremio.DeletaRegistrosOk += evt_Ponto.Padrao_DeletaRegistrosOk;
-           // Não inclui esta rotina para os premios
-            // comum.EdtTrabPremio.AfterDeletaRegistros += evt_Ponto.Padrao_AfterDeletaRegistros;
+            // 2026-05-12: visibilidade reativa do botão "Retificar provisório".
+            // PositionChanged nas 3 BindingSources cobre navegação por linha; o
+            // SelectedIndexChanged do tab control cobre troca de aba.
+            EventHandler atualizaRet = (s, ev) => AtualizaVisibilidadeRetificar();
+            if (evt_Ponto.bmTrabMov != null)     evt_Ponto.bmTrabMov.PositionChanged     += atualizaRet;
+            if (evt_Ponto.bmTrabNoturno != null) evt_Ponto.bmTrabNoturno.PositionChanged += atualizaRet;
+            if (evt_Ponto.bmTrabMovAnt != null)  evt_Ponto.bmTrabMovAnt.PositionChanged  += atualizaRet;
+            // estado inicial
+            AtualizaVisibilidadeRetificar();
 
+            // 2026-05-12: sinalização visual + bloqueio de edição em mês fechado.
+            // Aplica nos 3 grids (Diaristas, Noturno, Semana Anterior).
+            ConfiguraSinalizacaoMesFechado(dgvTrabMov);
+            ConfiguraSinalizacaoMesFechado(dgvNoturno);
+            ConfiguraSinalizacaoMesFechado(dgvTrabMovAnt);
+        }
 
+        /// <summary>
+        /// Pluga handlers de CellFormatting (cores) e CellBeginEdit (bloqueio) num grid:
+        ///  - Linha com CODSER='943' fica amarela (alerta visual de provisório)
+        ///  - Célula DIA_n cujo dia real cai em mês fechado fica cinza + ReadOnly
+        ///  - Tentativa de editar célula congelada é silenciosamente cancelada
+        ///    (validator no save é o cinto-suspensório, mas UI não deve nem deixar tentar)
+        ///
+        /// Adicionado 2026-05-12.
+        /// </summary>
+        private void ConfiguraSinalizacaoMesFechado(System.Windows.Forms.DataGridView dgv)
+        {
+            if (dgv == null) return;
+            dgv.CellFormatting += (s, e) =>
+            {
+                if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+                try
+                {
+                    var row = dgv.Rows[e.RowIndex];
+                    var col = dgv.Columns[e.ColumnIndex];
 
+                    // Linha amarela se CODSER='943'
+                    if (row.Cells["CODSER"] != null)
+                    {
+                        string codser = (row.Cells["CODSER"].Value ?? "").ToString().Trim();
+                        if (codser == ServicoFiltroTrab.CODSERV_PONTOPROVISORIO_PUBLIC)
+                        {
+                            e.CellStyle.BackColor = System.Drawing.Color.LightGoldenrodYellow;
+                        }
+                    }
+
+                    // DIA_n cinza se está em mês fechado
+                    string colName = col.DataPropertyName ?? col.Name ?? "";
+                    if (colName.StartsWith("DIA") && colName.Length == 4)
+                    {
+                        int n;
+                        if (!int.TryParse(colName.Substring(3, 1), out n)) return;
+                        if (n < 1 || n > 7) return;
+                        if (row.Cells["DATA"] != null && row.Cells["DATA"].Value != null
+                            && row.Cells["DATA"].Value != DBNull.Value)
+                        {
+                            DateTime data = Convert.ToDateTime(row.Cells["DATA"].Value);
+                            if (RegrasMesFechado.DiaEstaFechado(data, n))
+                            {
+                                e.CellStyle.BackColor = System.Drawing.Color.LightGray;
+                                e.CellStyle.ForeColor = System.Drawing.Color.DimGray;
+                            }
+                        }
+                    }
+                }
+                catch (Exception) { /* defensivo: cor é cosmético, nunca explode */ }
+            };
+
+            dgv.CellBeginEdit += (s, e) =>
+            {
+                if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+                try
+                {
+                    var row = dgv.Rows[e.RowIndex];
+                    var col = dgv.Columns[e.ColumnIndex];
+                    string colName = col.DataPropertyName ?? col.Name ?? "";
+
+                    if (row.Cells["DATA"] == null || row.Cells["DATA"].Value == null
+                        || row.Cells["DATA"].Value == DBNull.Value) return;
+                    DateTime data = Convert.ToDateTime(row.Cells["DATA"].Value);
+
+                    // DIA_n: bloqueia se dia individual em mês fechado
+                    if (colName.StartsWith("DIA") && colName.Length == 4)
+                    {
+                        int n;
+                        if (!int.TryParse(colName.Substring(3, 1), out n)) return;
+                        if (n >= 1 && n <= 7 && RegrasMesFechado.DiaEstaFechado(data, n))
+                        {
+                            e.Cancel = true;
+                        }
+                        return;
+                    }
+
+                    // Outros campos congelados: bloqueia se mês inteiro fechado
+                    if (RegrasMesFechado.MesFechado(data))
+                    {
+                        // Campos que congelam (exceto CODSER, que tem fluxo dedicado de retificação)
+                        string up = colName.ToUpper();
+                        if (up == "DATA" || up == "NOTURNO" || up == "BL" || up == "NUM_MOD" || up == "FAZMOV")
+                        {
+                            e.Cancel = true;
+                        }
+                    }
+                }
+                catch (Exception) { /* defensivo */ }
+            };
         }
         private void color_Enter(object sender, EventArgs e)
         {
@@ -360,11 +451,6 @@ namespace ApoioContabilidade.Trabalho
                 {
                     ogrid = comum.oTrabNoturno;
                     ArmePadrao = comum.EdtTrabNoturno;
-                }
-                else if (otab.SelectedTab.Name.ToUpper() == "TPPREMIO")
-                {
-                    ogrid = comum.oTrabPremio;
-                    ArmePadrao = comum.EdtTrabPremio;
                 }
             }
             else if (pnCadastro.ContainsFocus)
@@ -465,11 +551,6 @@ namespace ApoioContabilidade.Trabalho
                     ogrid = comum.oTrabNoturno;
                     ArmePadrao = comum.EdtTrabNoturno;
                 }
-                else if (otab.SelectedTab.Name.ToUpper() == "TPPREMIO")
-                {
-                    ogrid = comum.oTrabPremio;
-                    ArmePadrao = comum.EdtTrabPremio;
-                }
             }
             // se não houver nenhum datagrid em focus, coloca o Mestre em Foco
             if (ArmePadrao == null)
@@ -483,20 +564,11 @@ namespace ApoioContabilidade.Trabalho
             return;
         }
 
-        private bool PodeAlterarMovAtual()
-        {
-            bool result = false;
-            if (evt_Ponto.bmTrabCad == null) return result;
-            DataRowView registro = (evt_Ponto.bmTrabCad.Current as DataRowView);
+        // B2 fix 2026-05-08: removida PodeAlterarMovAtual — função órfã (não era chamada
+        // de lugar algum) com 2 bugs visíveis: literal "TRAB" em vez da variável `trab`
+        // no ContainsKey, e MessageBox.Show("A") debug não removido. Inseguro deixar
+        // pendurado pra alguém um dia chamar e quebrar fluxo.
 
-            if (registro == null) return result;
-            if (evt_Ponto.dictPontoProvisorioAviso == null) return true;
-            string trab = registro["CODCAD"].ToString();
-            if (!evt_Ponto.dictPontoProvisorioAviso.ContainsKey("TRAB")) return true;
-
-            MessageBox.Show("A");
-            return false;
-        }
         private void tsDelete_Click(object sender, EventArgs e)
         {
 
@@ -513,11 +585,6 @@ namespace ApoioContabilidade.Trabalho
             {
                 ArmePadrao = comum.EdtTrabNoturno;
                 ogrid = comum.oTrabNoturno;
-            }
-            else if (dgvPremio.Focused)
-            {
-                ArmePadrao = comum.EdtTrabPremio;
-                ogrid = comum.oTrabPremio;
             }
 
             // se não houver nenhum datagrid em focus, coloca o Mestre em Foco
@@ -548,7 +615,6 @@ namespace ApoioContabilidade.Trabalho
         {
             DataGridView odataGrid = null;
             bool movant = false;
-            if (dgvPremio.Focused) return;
             if (dgvTrabMov.Focused)
             {
                 odataGrid = dgvTrabMov;
@@ -630,129 +696,183 @@ namespace ApoioContabilidade.Trabalho
 
             DataObject retrievedData = (DataObject)Clipboard.GetDataObject();
 
-            if (retrievedData.GetDataPresent("CustomFormat"))
+            if (!retrievedData.GetDataPresent("CustomFormat")) return;
+
+            List<IDictionary<string, object>> item =
+                retrievedData.GetData("CustomFormat") as List<IDictionary<string, object>>;
+            if ((item == null) || (item.Count == 0)) return;
+            if (ArmePadrao.Navegador.BindingSource == null)
+                ArmePadrao.Navegador.BindingSource = BmSource;
+
+            DataTable dataTable = (BmSource.DataSource as DataView).Table;
+
+            // B3 fix 2026-05-08: refatorado para "salvar primeiro, popular UI só após sucesso".
+            // Antes:
+            //   - rows eram criadas via BmSource.AddNew() ANTES de mandar pro servidor
+            //   - se servidor falhasse no meio do batch, fazia break sem reverter UI
+            //     nem alertar que parte das linhas já tinha sido salva no banco
+            //   - estado ficava inconsistente: UI mostrando linhas que estão (algumas)
+            //     salvas no servidor e (outras) só locais
+            // Agora:
+            //   1) Cria rows como Detached (DataTable.NewRow), sem tocar BindingSource
+            //   2) Envia ao servidor em batches de 5
+            //   3) Falha → mensagem clara informando quantas foram salvas e como
+            //      sincronizar (fechar/reabrir). UI fica intocada.
+            //   4) Sucesso total → adiciona rows na DataTable (UI reflete o estado real)
+
+            // 1) cria todas as rows como Detached
+            List<DataRow> dataRows = new List<DataRow>();
+            foreach (Dictionary<string, object> odict in item)
             {
-                List<IDictionary<string, object>> item =
-                    retrievedData.GetData("CustomFormat") as List<IDictionary<string, object>>;
-                if ((item == null) || (item.Count == 0)) return;
-                if (ArmePadrao.Navegador.BindingSource == null)
-                    ArmePadrao.Navegador.BindingSource = BmSource;
-               /* ToolStripItem[] tsSalve = ArmePadrao.Navegador.Items.Find("salve", false);
-                ToolStripItem salve = null;
-                bool Enable;
-                if (tsSalve.Length == 1)
+                DataRow orowNovo = dataTable.NewRow();
+                foreach (KeyValuePair<string, object> par in odict)
                 {
-                    salve = tsSalve[0];
-                    Enable = salve.Enabled;
+                    orowNovo[par.Key] = par.Value;
+                }
+                dataRows.Add(orowNovo);
+            }
+
+            // 2) envia ao servidor em batches de 5
+            const int BATCH_SIZE = 5;
+            int salvas = 0;
+            bool result = true;
+            for (int i = 0; i < dataRows.Count; i += BATCH_SIZE)
+            {
+                DataRow[] batch = dataRows.Skip(i).Take(BATCH_SIZE).ToArray();
+                result = await Prepara_Sql.OpereIncluaRegistrosServidorAsync(batch, "CLTPONTO");
+                if (!result) break;
+                salvas += batch.Length;
+            }
+
+            if (!result)
+            {
+                // 3) falha: rows ainda Detached → UI não foi alterada.
+                //    Avisa o operador sobre o estado real do servidor.
+                string msg;
+                if (salvas == 0)
+                {
+                    msg = "Falha ao colar — nenhuma linha foi salva no servidor.";
                 }
                 else
                 {
-                    MessageBox.Show("Desconfigurou Colagem");
+                    msg = "Falha ao colar.\n\n" +
+                          salvas + " de " + dataRows.Count + " linhas foram salvas no servidor antes da falha.\n\n" +
+                          "Recomendado: feche e reabra este apontamento para sincronizar a tela com o que está no banco.";
                 }
-                tsSalve = ArmePadrao.Navegador.Items.Find("novo", false);*/
-                /* ToolStripItem novo = null;
-                 if (tsSalve.Length == 1)
-                 {
-                     novo = tsSalve[0];
-                 }
-                */
-
-
-                DataRowView mestre = (evt_Ponto.bmTrabCad.Current as DataRowView);
-                DataTable dataTable = (BmSource.DataSource as DataView).Table;
-
-                // Parcelar PARA QUE GRAVE DE 8 em 8
-
-
-                List<DataRow> dataRows = new List<DataRow>();
-
-                foreach (Dictionary<string, Object> odict in item)
-                {
-                    DataRowView orowNovo = (DataRowView)BmSource.AddNew();
-                    foreach (KeyValuePair<string, object> par in odict)
-                    {
-                        orowNovo.Row[par.Key] = par.Value;
-                    }
-                    dataRows.Add(orowNovo.Row);
-
-                    // dataTable.Rows.Add(orowNovo);
-                }
-                List<DataRow> dataRowsServidor = new List<DataRow>();
-                bool result = true;
-                foreach (DataRow orow in dataRows)
-                {
-                    dataRowsServidor.Add(orow);
-                    if (dataRowsServidor.Count > 5)
-                    {
-                        result = await Prepara_Sql.OpereIncluaRegistrosServidorAsync(dataRowsServidor.ToArray(), "CLTPONTO");
-                        dataRowsServidor.Clear();
-                        if (!result)
-                        {
-                            break;
-                        }
-                    }
-                }
-                if (dataRowsServidor.Count > 0)
-                {
-                    result = await Prepara_Sql.OpereIncluaRegistrosServidorAsync(dataRowsServidor.ToArray(), "CLTPONTO");
-                    dataRowsServidor.Clear();
-                }
-                if (!result) { MessageBox.Show("ERRO AO COLAR"); return; }
-
-
-
-                foreach (DataRow orow in dataRows)
-                {
-                    if (orow.RowState == DataRowState.Detached)
-                        dataTable.Rows.Add(orow);
-                    orow.AcceptChanges();
-                    try
-                    {
-                        if (orow["NOTURNO"].ToString().Trim() == "")
-                            evt_Ponto.AtualizaDados(evt_Ponto.bmTrabMov, evt_Ponto.bmTrabNoturno);
-                        else
-                            evt_Ponto.AtualizaDados(evt_Ponto.bmTrabNoturno, evt_Ponto.bmTrabMov);
-                    }
-                    catch (Exception) { MessageBox.Show("Erro ao atualizar Mestre"); }
-                }
-                comum.oTrabCad.FuncaoSoma();
-                comum.oTrabCad.ssColocaTotais();
-                /*
-
-                foreach (Dictionary<string, Object> odict in item)
-                {
-                    DataRowView orowNovo = (DataRowView)BmSource.AddNew();
-                    foreach (KeyValuePair<string, object> par in odict)
-                    {
-                        orowNovo.Row[par.Key] = par.Value;
-                    }
-                    // dataTable.Rows.Add(orowNovo);
-                    salve.Enabled = true;
-                    try
-                    {
-                        salve.PerformClick();
-                        Thread.Sleep(10);
-                        if (salve.Enabled)
-                        {
-                            BmSource.CancelEdit();
-                            orowNovo.Row.Delete();
-                            int pos = BmSource.CurrencyManager.Position;
-                            if (pos >= 0)
-                                BmSource.CurrencyManager.Refresh();
-                        }
-                    }
-                    catch (Exception E)
-                    {
-                        MessageBox.Show("Erro na Colagem:" + E.Message);
-                        salve.Enabled = false;
-                        return;
-                    }
-
-                }
-                salve.Enabled = false;
-                */
+                MessageBox.Show(msg, "ERRO AO COLAR", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
             }
 
+            // 4) sucesso total: popular UI
+            foreach (DataRow orow in dataRows)
+            {
+                dataTable.Rows.Add(orow);
+                orow.AcceptChanges();
+                try
+                {
+                    if (orow["NOTURNO"].ToString().Trim() == "")
+                        evt_Ponto.AtualizaDados(evt_Ponto.bmTrabMov, evt_Ponto.bmTrabNoturno);
+                    else
+                        evt_Ponto.AtualizaDados(evt_Ponto.bmTrabNoturno, evt_Ponto.bmTrabMov);
+                }
+                catch (Exception)
+                {
+                    MessageBox.Show("Erro ao atualizar Mestre");
+                }
+            }
+            comum.oTrabCad.FuncaoSoma();
+            comum.oTrabCad.ssColocaTotais();
+
+            // 5) Guarda contexto pra suportar Ctrl+Z (desfazer último colar).
+            //    Se mudar aba ou trabalhador antes do undo, será recusado.
+            _undoColarRows = new List<DataRow>(dataRows);
+            _undoColarTable = dataTable;
+            _undoColarTab = tcCltPonto.SelectedTab != null ? tcCltPonto.SelectedTab.Name : "";
+            DataRowView rowMestreUndo = evt_Ponto.bmTrabCad.Current as DataRowView;
+            _undoColarTrab = rowMestreUndo != null ? rowMestreUndo["CODCAD"].ToString() : "";
+        }
+
+        /// <summary>
+        /// Desfaz o último colar bem-sucedido — DELETE das linhas no servidor + remoção da UI.
+        /// Disparado por Ctrl+Z. Só age se o contexto (aba + trabalhador) ainda for o mesmo
+        /// de quando o colar aconteceu; senão, undo expira silenciosamente.
+        /// Adicionado 2026-05-08.
+        /// </summary>
+        private async Task DesfazerUltimoColar()
+        {
+            if (_undoColarRows == null || _undoColarRows.Count == 0) return;
+
+            // (4b) valida contexto — undo expira ao mudar aba ou trabalhador
+            string tabAtual = tcCltPonto.SelectedTab != null ? tcCltPonto.SelectedTab.Name : "";
+            DataRowView rowAtual = evt_Ponto.bmTrabCad.Current as DataRowView;
+            string trabAtual = rowAtual != null ? rowAtual["CODCAD"].ToString() : "";
+            if (tabAtual != _undoColarTab || trabAtual != _undoColarTrab)
+            {
+                _undoColarRows = null;
+                return;
+            }
+
+            int total = _undoColarRows.Count;
+            int modificadas = _undoColarRows.Count(r => r.RowState != DataRowState.Unchanged
+                                                     && r.RowState != DataRowState.Detached);
+
+            // (2a) confirmar com MessageBox; (3b) avisar se houver linhas editadas
+            string pergunta;
+            if (modificadas > 0)
+            {
+                pergunta = "Desfazer última colagem?\n\n" +
+                           total + " linhas serão removidas.\n\n" +
+                           "ATENÇÃO: " + modificadas + " dessas linhas foi editada após o colar — será removida igualmente.";
+            }
+            else
+            {
+                pergunta = "Desfazer última colagem?\n\n" +
+                           total + " linhas serão removidas do servidor.";
+            }
+            DialogResult resp = MessageBox.Show(pergunta, "Desfazer Colagem",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (resp != DialogResult.Yes) return;
+
+            // DELETE no servidor uma a uma (API não tem batch delete)
+            int deletadas = 0;
+            bool sucesso = true;
+            foreach (DataRow orow in _undoColarRows)
+            {
+                if (orow.RowState == DataRowState.Detached) { deletadas++; continue; }
+                bool ok = await Prepara_Sql.OpereDeleteRegistroServidorAsync(orow, "CLTPONTO");
+                if (!ok) { sucesso = false; break; }
+                deletadas++;
+            }
+
+            // Remove localmente as que já foram deletadas no servidor
+            // (mesmo em caso de falha parcial, pra UI ficar consistente com servidor)
+            for (int i = 0; i < deletadas && i < _undoColarRows.Count; i++)
+            {
+                DataRow r = _undoColarRows[i];
+                if (r.RowState != DataRowState.Detached)
+                    _undoColarTable.Rows.Remove(r);
+            }
+            _undoColarTable.AcceptChanges();
+
+            if (!sucesso)
+            {
+                string msg = (deletadas == 0)
+                    ? "Falha ao desfazer — nenhuma linha foi removida do servidor."
+                    : "Falha ao desfazer.\n\n" +
+                      deletadas + " de " + total + " linhas foram removidas no servidor antes da falha.\n\n" +
+                      "Recomendado: feche e reabra este apontamento para sincronizar.";
+                MessageBox.Show(msg, "ERRO AO DESFAZER", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                _undoColarRows = null; // estado bagunçado, não dá pra retentar
+                return;
+            }
+
+            // sucesso: sincroniza mestre
+            try { evt_Ponto.AtualizaDados(evt_Ponto.bmTrabMov, evt_Ponto.bmTrabNoturno); } catch (Exception) { }
+            try { evt_Ponto.AtualizaDados(evt_Ponto.bmTrabNoturno, evt_Ponto.bmTrabMov); } catch (Exception) { }
+            comum.oTrabCad.FuncaoSoma();
+            comum.oTrabCad.ssColocaTotais();
+
+            _undoColarRows = null; // consumido — só 1 nível de undo (1a)
         }
 
         private void tcCltPonto_Enter(object sender, EventArgs e)
@@ -771,10 +891,6 @@ namespace ApoioContabilidade.Trabalho
             {
                 dgvNoturno.Focus();
             }
-            else if (otab.SelectedTab.Name.ToUpper() == "TPPREMIO")
-            {
-                dgvPremio.Focus();
-            }
             else if (otab.SelectedTab.Name.ToUpper() == "TPSEMANAANT")
             {
                 dgvTrabMovAnt.Focus();
@@ -783,6 +899,10 @@ namespace ApoioContabilidade.Trabalho
 
         private void tcCltPonto_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // 2026-05-12: re-checa se botão "Retificar provisório" deve aparecer
+            // (a aba ativa muda qual BindingSource serve a row corrente).
+            AtualizaVisibilidadeRetificar();
+
             TabControl otab = tcCltPonto;
             if (otab.SelectedTab.Name.ToUpper() == "TPDIARISTAS")
             {
@@ -792,10 +912,6 @@ namespace ApoioContabilidade.Trabalho
             else if (otab.SelectedTab.Name.ToUpper() == "TPNOTURNO")
             {
                 dgvNoturno.Focus();
-            }
-            else if (otab.SelectedTab.Name.ToUpper() == "TPPREMIO")
-            {
-                dgvPremio.Focus();
             }
 
             else if (otab.SelectedTab.Name.ToUpper() == "TPSEMANAANT")
@@ -813,6 +929,126 @@ namespace ApoioContabilidade.Trabalho
             tsColar.Enabled = false;
             tsCopiar.Enabled = false;
         }
+        // 2026-05-08: tsServico (botão "Serviços") — abre FrmServ filtrado pelo NUM_MOD
+        // da row corrente (aba Diaristas/Noturno/Semana Anterior). Equivalente C# do
+        // ConsultaServExecute Delphi (fNovotrab_Ponto.pas:2716).
+        private void tsServico_Click(object sender, EventArgs e)
+        {
+            string numMod = "";
+            try
+            {
+                // pega a row corrente da aba ativa
+                BindingSource bm = null;
+                TabControl otab = tcCltPonto;
+                if (otab.SelectedTab != null)
+                {
+                    string nome = otab.SelectedTab.Name.ToUpper();
+                    if (nome == "TPDIARISTAS") bm = evt_Ponto.bmTrabMov;
+                    else if (nome == "TPNOTURNO") bm = evt_Ponto.bmTrabNoturno;
+                    else if (nome == "TPSEMANAANT") bm = evt_Ponto.bmTrabMovAnt;
+                }
+                DataRowView rv = bm != null ? bm.Current as DataRowView : null;
+                if (rv != null && rv.Row.Table.Columns.Contains("NUM_MOD"))
+                    numMod = (rv["NUM_MOD"] ?? "").ToString().Trim();
+            }
+            catch (Exception) { }
+
+            FrmServ form = new FrmServ();
+            form.NumModeloFiltro = numMod;
+            form.ShowDialog(this);
+        }
+
+        /// <summary>
+        /// Abre FrmRetificarProvisorio pra trocar CODSER=943 da linha corrente
+        /// pelo serviço real. Após retornar OK, atualiza CODSER/NUM_MOD/QUANT/OBS
+        /// da DataRow e dispara save normal (que vai pelo validator de mês fechado
+        /// + audit log).
+        ///
+        /// Adicionado 2026-05-12.
+        /// </summary>
+        private void tsRetificar_Click(object sender, EventArgs e)
+        {
+            DataRowView rv = RowCorrenteCltPonto();
+            if (rv == null)
+            {
+                MessageBox.Show("Selecione a linha provisória que deseja retificar.",
+                    "Retificar provisório", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string codserAtu = (rv["CODSER"] ?? "").ToString().Trim();
+            if (codserAtu != ServicoFiltroTrab.CODSERV_PONTOPROVISORIO_PUBLIC)
+            {
+                MessageBox.Show("Só lançamentos com CODSER='" +
+                    ServicoFiltroTrab.CODSERV_PONTOPROVISORIO_PUBLIC + "' (provisório) podem ser retificados.",
+                    "Retificar provisório", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (FrmRetificarProvisorio dlg = new FrmRetificarProvisorio(rv.Row))
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                try
+                {
+                    rv.BeginEdit();
+                    rv["CODSER"] = dlg.NovoCodser;
+                    if (rv.Row.Table.Columns.Contains("NUM_MOD") && !string.IsNullOrEmpty(dlg.NovoNumMod))
+                        rv["NUM_MOD"] = dlg.NovoNumMod;
+                    rv["QUANT"] = dlg.NovaQuant;
+                    if (rv.Row.Table.Columns.Contains("OBS"))
+                        rv["OBS"] = dlg.NovaObs;
+                    rv.EndEdit();
+                    // O save real acontece pelo fluxo normal (Edita_Cad / ArmeEdicao):
+                    // o usuário move a linha ou clica salvar e o validator de mês fechado
+                    // + audit do CLTPONTO disparam normalmente.
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Falha ao aplicar retificação: " + ex.Message,
+                        "Retificar provisório", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Devolve a DataRowView corrente da aba ativa (Diaristas/Noturno/SemanaAnt).
+        /// </summary>
+        private DataRowView RowCorrenteCltPonto()
+        {
+            BindingSource bm = null;
+            TabControl otab = tcCltPonto;
+            if (otab.SelectedTab != null)
+            {
+                string nome = otab.SelectedTab.Name.ToUpper();
+                if (nome == "TPDIARISTAS") bm = evt_Ponto.bmTrabMov;
+                else if (nome == "TPNOTURNO") bm = evt_Ponto.bmTrabNoturno;
+                else if (nome == "TPSEMANAANT") bm = evt_Ponto.bmTrabMovAnt;
+            }
+            return bm != null ? bm.Current as DataRowView : null;
+        }
+
+        /// <summary>
+        /// Atualiza visibilidade do botão tsRetificar baseado na linha corrente:
+        /// só aparece quando linha tem CODSER=943.
+        /// Chamado pelos PositionChanged das 3 BindingSources e por SelectedIndexChanged
+        /// do tab control.
+        /// </summary>
+        private void AtualizaVisibilidadeRetificar()
+        {
+            try
+            {
+                DataRowView rv = RowCorrenteCltPonto();
+                bool eh943 = rv != null
+                    && rv.Row.Table.Columns.Contains("CODSER")
+                    && (rv["CODSER"] ?? "").ToString().Trim() == ServicoFiltroTrab.CODSERV_PONTOPROVISORIO_PUBLIC;
+                tsRetificar.Visible = eh943;
+            }
+            catch (Exception)
+            {
+                tsRetificar.Visible = false;
+            }
+        }
+
         private void tsConsulta_Click(object sender, EventArgs e)
         {
             try

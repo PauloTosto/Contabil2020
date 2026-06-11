@@ -85,6 +85,11 @@ namespace ApoioContabilidade.Fiscal.Servicos
 
 
             odataset = await ApiServices.Api_QueryMulti(sql);
+            // B10 (2026-05-11): AcceptChanges defensivo. Api_QueryMulti devolve linhas
+            // como RowState=Added; sem isso, qualquer save-loop futuro que decida por
+            // RowState ia tratar TODAS as linhas como novas.
+            foreach (DataTable t in odataset.Tables) t.AcceptChanges();
+
             DataTable qrCatProd = odataset.Tables[0];
             DataTable NfeLote = odataset.Tables[2];
             DataTable qrFirmas = odataset.Tables[odataset.Tables.Count - 1];

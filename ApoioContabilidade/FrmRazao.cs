@@ -1564,12 +1564,21 @@ namespace ApoioContabilidade
                 if (somaRateado != ValoraRatear)
                 {
                     // coloca a diferença no maior valor da série
-                    Decimal valorMax = fazendasInssRateado.AsEnumerable().Max(row => row.Field<Decimal>("VALOR"));
-                    DataRow rowMax = fazendasInssRateado.AsEnumerable().Where(row => row.Field<Decimal>("VALOR") == valorMax).FirstOrDefault();
-                    rowMax.BeginEdit();
-                    rowMax["VALOR"] = Convert.ToDecimal(rowMax["VALOR"]) - (ValoraRatear - somaRateado);
-                    rowMax.EndEdit();
-                    rowMax.AcceptChanges();
+                    try
+                    {
+                        Decimal valorMax = fazendasInssRateado.AsEnumerable().Max(row => row.Field<Decimal>("VALOR"));
+                        DataRow rowMax = fazendasInssRateado.AsEnumerable().Where(row => row.Field<Decimal>("VALOR") == valorMax).FirstOrDefault();
+                        rowMax.BeginEdit();
+                        rowMax["VALOR"] = Convert.ToDecimal(rowMax["VALOR"]) - (ValoraRatear - somaRateado);
+                        rowMax.EndEdit();
+                        rowMax.AcceptChanges();
+                    }
+                    catch (Exception)
+                    {
+
+                       
+                    }
+                    
                 }
                 fazendasInssRateado.AcceptChanges();
                 // retificar valores  Originais 

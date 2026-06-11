@@ -424,8 +424,8 @@ namespace ClassFiltroEdite.UserControls
             ComboFilho.AutoCompleteMode = AutoCompleteMode.Suggest;
             ComboFilho.AutoCompleteSource = AutoCompleteSource.ListItems;
             ComboFilho.Validating += ComboValidatingNaoPermiteVazio;
-            ComboFilho.Validated += ComboFilho_Validated; ;
-            ComboFilho.Enter += GlebaEnter;
+            ComboFilho.Validated += ComboFilho_Validated;
+            // R7 (2026-05-08): ComboFilho.Enter += GlebaEnter — handler removido (era vazio).
 
        
             ComboNeto.Tag = "M";// maiusculas e comportamento co combo com bind is TEXT
@@ -452,7 +452,7 @@ namespace ClassFiltroEdite.UserControls
             }
 
             ComboNeto.Enter += QuadraEnter;
-            ComboNeto.Leave += ComboNeto_Leave;
+            // R7 (2026-05-08): ComboNeto.Leave += ComboNeto_Leave — handler removido (corpo era /* ... */).
 
         }
 
@@ -492,61 +492,22 @@ namespace ClassFiltroEdite.UserControls
         }
 
         #region Binding
-       /* private void B_BindingComplete(object sender, BindingCompleteEventArgs e)
-        {
-            string texto;
-            Binding bind = (sender as Binding);
-            try
-            {
-                texto = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField].ToString();
-            }
-            catch (Exception E)
-            {
-                return;
-            }
+        // R7 (2026-05-08): removido bloco /* B_BindingComplete */ — versão antiga não utilizada,
+        // substituída por B_BindingCompleteFilho e B_BindingCompleteNeto abaixo.
 
-            // dados do datasource sendo atualizados nos controles
-            if (e.BindingCompleteContext == BindingCompleteContext.ControlUpdate
-                && e.Exception == null)
-            {
-                if (bind.PropertyName == "SelectedValue")
-                {
-                    if (((ComboBox)bind.Control).SelectedValue == null) //&& (((ComboBox)bind.Control).DisplayMember == ((ComboBox)bind.Control).ValueMember))
-                    {
-                        // ((ComboBox)bind.Control).SelectedValue = texto.Trim();
-                    }
-                }
-                //  bind.BindingManagerBase.EndCurrentEdit();
-            }
-            // dados do controle sendo atualizados no datasource
-            if (e.BindingCompleteContext == BindingCompleteContext.DataSourceUpdate
-                 && e.Exception == null)
-                if (e.BindingCompleteState == BindingCompleteState.DataError)
-                    e.Binding.BindingManagerBase.CancelCurrentEdit();
-                else
-                if (e.BindingCompleteState == BindingCompleteState.Success)
-                {
-                    if (bind.PropertyName == "SelectedValue")
-                    {
-                         ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField]
-                         = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField].ToString().PadRight(2);
-
-                    }
-                }
-        }
-       */
         private void B_BindingCompleteFilho(object sender, BindingCompleteEventArgs e)
         {
 
             Binding bind = (sender as Binding);
             object texto;
-            //  object valuePai;
             try
             {
                 texto = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField];
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
+                // R6 (2026-05-08): antes silencioso. Loga pra diagnóstico.
+                System.Diagnostics.Debug.WriteLine("[ComboMDInverte2.B_BindingCompleteFilho] " + ex);
                 return;
             }
 
@@ -554,7 +515,7 @@ namespace ClassFiltroEdite.UserControls
             if (e.BindingCompleteContext == BindingCompleteContext.ControlUpdate
                 && e.Exception == null)
             {
-                if (((ComboBox)bind.Control).SelectedValue == null) // && (valuePai != null))
+                if (((ComboBox)bind.Control).SelectedValue == null)
                 {
                     ((ComboBox)bind.Control).SelectedValue = texto.ToString().Trim();
                 }
@@ -582,14 +543,14 @@ namespace ClassFiltroEdite.UserControls
 
             Binding bind = (sender as Binding);
             object texto;
-            //  object valueFilho;
             try
             {
-
                 texto = ((DataRowView)bind.BindingManagerBase.Current)[bind.BindingMemberInfo.BindingField];
             }
-            catch (Exception E)
+            catch (Exception ex)
             {
+                // R6 (2026-05-08): antes silencioso. Loga pra diagnóstico.
+                System.Diagnostics.Debug.WriteLine("[ComboMDInverte2.B_BindingCompleteNeto] " + ex);
                 return;
             }
 
@@ -626,18 +587,18 @@ namespace ClassFiltroEdite.UserControls
             if (suspendeValidate) return;
             string texto = ((ComboBox)sender).Text;
 
-            string selectedtexto = ((ComboBox)sender).SelectedText.Trim();
-
-            if ((((ComboBox)sender).SelectedValue == null) || (texto.Trim() == "")) // || (selectedtexto.Trim() == ""))
+            if ((((ComboBox)sender).SelectedValue == null) || (texto.Trim() == ""))
             {
-                e.Cancel = true;
+                // R5 fix (2026-05-08): NÃO usar `e.Cancel = true` — antes prendia o operador
+                // no campo, impedindo até navegação reversa (Shift+Tab) ou clique em outro
+                // controle. Agora apenas marca erro visual (ErrorProvider) e reverte o valor
+                // pro original; operador pode navegar livre.
                 Error_Set(sender as Control);
-
                 ((ComboBox)sender).DataBindings[0].ReadValue();
             }
             else
             {
-
+                Error_Set(sender as Control, "");
                 string text = ((ComboBox)sender).SelectedText.Trim();
                 if (text.Trim() == "")
                 {
@@ -692,11 +653,9 @@ namespace ClassFiltroEdite.UserControls
 
             if (((ComboBox)sender).SelectedValue == null)
             {
-                e.Cancel = true;
-
+                // R5 fix (2026-05-08): NÃO usar `e.Cancel = true` — antes prendia o operador
+                // no campo Quadra mesmo querendo navegar pra outro lugar. Erro fica visível.
                 Error_Set(sender as Control);
-
-
             }
             else
             {
@@ -705,7 +664,6 @@ namespace ClassFiltroEdite.UserControls
                 DataRow retornado = null;
                 try
                 {
-                    //string textocompara = texto.Trim().PadRight(25,' '); 
                     DataView oquery = (((ComboBox)sender).DataSource as System.Data.DataView);
                     if (oquery != null)
                         retornado = oquery.Table.AsEnumerable().Where(row => row.Field<string>(valuemember).Trim() == texto.Trim()).FirstOrDefault();
@@ -713,7 +671,7 @@ namespace ClassFiltroEdite.UserControls
                 catch (Exception)
                 {
                 }
-                if (retornado != null) { e.Cancel = false; return; }
+                if (retornado != null) { Error_Set(sender as Control, ""); return; }
                 try
                 {
                     ((ComboBox)sender).DataBindings[0].ReadValue();
@@ -771,25 +729,59 @@ namespace ClassFiltroEdite.UserControls
         private void ComboFilho_Validated(object sender, EventArgs e)
         {
             if (suspendeValidate) return;
-            string gleba = ((ComboBox)sender).Text;
             Error_Set(sender as Control, "");
+            // Bug fix R1 (2026-05-08): quando Gleba é validada, filtra Quadras
+            // pela Gleba atual. Sem isso o operador via TODAS as quadras de TODAS
+            // as glebas (1.295 quadras) e podia escolher uma incompatível.
+            mudancaFiltroFilho();
+        }
 
-            DataRow orow = null;
-            suspendeValidate = true;
-            try
+        /// <summary>
+        /// Filtra <c>BmNeto</c> (Quadras) pela Gleba atual da row em edição.
+        /// Se a Quadra atual não pertence à nova Gleba, limpa a Quadra.
+        /// Adicionado 2026-05-08 (R1) — antes a "cascata Gleba→Quadra" era ilusória:
+        /// a lista de Quadras nunca era filtrada, permitindo combinações inválidas.
+        /// </summary>
+        private void mudancaFiltroFilho()
+        {
+            DataRowView orow = null;
+            try { orow = (BmDados.Current as DataRowView); } catch (Exception) { }
+            if (orow == null) return;
+
+            string gleba = orow[fieldNameFilho].ToString().Trim();
+            string quadra = orow[fieldNameNeto].ToString().Trim();
+
+            // Defesa contra apóstrofo no valor (improvável em códigos numéricos mas barato).
+            string filtroNovo = (gleba == "")
+                ? ""
+                : "GLEBA = '" + gleba.Replace("'", "''") + "'";
+            string filtroAntes = BmNeto.Filter ?? "";
+
+            if (filtroNovo == filtroAntes) return; // já está no filtro certo
+
+            string sortAntes = BmNeto.Sort;
+            BmNeto.Filter = filtroNovo;
+            BmNeto.Sort = "QUADRA";
+
+            // Se há Quadra selecionada, verifica se ainda existe no filtro novo;
+            // se não, limpa pra evitar inconsistência visual.
+            if (quadra != "")
             {
-                orow = (BmFilho.DataSource as DataView).Table.AsEnumerable().Where(row => row.Field<string>("GLEBA").Trim() == gleba.Trim()).FirstOrDefault();
+                bool existe = false;
+                try
+                {
+                    existe = ((BmNeto.DataSource as DataView).Find(quadra) != -1);
+                }
+                catch (Exception) { }
+                if (!existe)
+                {
+                    cbNeto.SelectedIndex = -1;
+                    cbNeto.Text = "";
+                    // limpa também o valor na DataRow pra não persistir Quadra inválida
+                    try { orow[fieldNameNeto] = ""; } catch (Exception) { }
+                }
             }
-            catch (Exception)
-            {
-            }
-            if (orow != null)
-            {
-               
-               // string setor = orow["SETOR"].ToString();
-                //cbPai.SelectedValue = setor;
-            }
-            suspendeValidate = false;
+            BmNeto.Sort = sortAntes;
         }
 
         #endregion
@@ -798,53 +790,29 @@ namespace ClassFiltroEdite.UserControls
 
 
 
-        // na mudança da gleba
-        private void GlebaEnter(object sender, EventArgs e)
-        {
-            // mudancaFiltroPai();
-           // cbNeto.TabStop = true;
-        }
+        // R7 (2026-05-08): GlebaEnter removido — só tinha código morto comentado, nada efetivo.
+        //                  ComboNeto_Leave removido — bloco /* ... */ inteiro era código morto.
+        //                  Eventos foram desligados em ConfigureComboBoxFilhoNeto correspondentes.
 
         private void QuadraEnter(object sender, EventArgs e)
         {
-            // MudancaFiltroFilho();
-            // cbFilho.TabStop = false;
-            // cbPai.TabStop = false;
+            // R1 (2026-05-08): garante que o filtro de Quadras está correto antes
+            // de mostrar o dropdown. Defesa pra cenários onde Validated da Gleba não
+            // disparou (ex: registro carregado do banco sem ter passado por Gleba primeiro).
+            mudancaFiltroFilho();
             cbFilho.SelectionLength = 0;
         }
-        private void ComboNeto_Leave(object sender, EventArgs e)
-        {
 
-          /*  DataRowView orow = null;
-            try
-            {
-                orow = (bmDados.Current as DataRowView);
-            }
-            catch (Exception)
-            {
-            }
-            if (orow == null) return;
-            string quadra = (sender as ComboBox).Text.ToString();
-            if (quadra.Trim() == "")
-            {
-                (sender as ComboBox).SelectedIndex = -1;
-                cbFilho.TabStop = true;
-            }
-          */
-        }
-       
-
-     
 
         private void ComboMDInverte_Leave(object sender, EventArgs e)
         {
-           // modifiedvaluePai = ComboPai.SelectedValue;
+            // R7 (2026-05-08): referências comentadas a "modifiedvaluePai/origvaluePai"
+            // removidas — eram de uma estrutura "Pai" deste componente que nunca existiu
+            // (ComboMDInverte2 só tem Filho+Neto; o "Pai" provavelmente era de uma versão antiga).
             modifiedvalueFilho = ComboFilho.SelectedValue;
             modifiedvalueNeto = ComboNeto.SelectedValue;
-           // modifiedvaluePai = modifiedvaluePai == null ? "" : modifiedvaluePai;
             modifiedvalueFilho = modifiedvalueFilho == null ? "" : modifiedvalueFilho;
             modifiedvalueNeto = modifiedvalueNeto == null ? "" : modifiedvalueNeto;
-           // origvaluePai = origvaluePai == null ? "" : origvaluePai;
             origvalueFilho = origvalueFilho == null ? "" : origvalueFilho;
             origvalueNeto = origvalueNeto == null ? "" : origvalueNeto;
             if ((modifiedvalueFilho.ToString().Trim() != origvalueFilho.ToString().Trim())

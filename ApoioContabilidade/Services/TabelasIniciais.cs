@@ -1,4 +1,5 @@
-﻿using ApoioContabilidade.Models;
+﻿using ApoioContabilidade.Core;
+using ApoioContabilidade.Models;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -106,11 +107,30 @@ namespace ApoioContabilidade.Services
             nometabela.Add("Negocio");
 
 
-            str = "SELECT * FROM GLEBAS WHERE (ALLTRIM(DTOS(FIM)) = '') AND (ALLTRIM(COD) <> '' ) ORDER BY SETOR,COD";
+            // 2026-05-11: filtro de escopo por SETOR. Se o usuário logado tem
+            // setores cadastrados em USUARIO_SETORES (gerente de fazenda), restringe
+            // GLEBAS aos setores autorizados; senão, devolve tudo (escritório).
+            // QUADRAS herda o filtro via subquery — não precisa mostrar quadra de
+            // gleba que o usuário não pode ver.
+            string filtroSetor = SessaoAtual.FiltroSqlSetor("SETOR");
+            string filtroSetorQuadra = "";
+            if (SessaoAtual.TemEscopoRestrito)
+            {
+                // QUADRAS não tem coluna SETOR direta; filtra por GLEBA cuja gleba.SETOR está autorizada.
+                filtroSetorQuadra =
+                    " AND GLEBA IN (SELECT COD FROM GLEBAS WHERE 1=1 " +
+                    SessaoAtual.FiltroSqlSetor("SETOR") + ") ";
+            }
+
+            str = "SELECT * FROM GLEBAS WHERE (ALLTRIM(DTOS(FIM)) = '') AND (ALLTRIM(COD) <> '' ) "
+                + filtroSetor
+                + " ORDER BY SETOR,COD";
             sql.Add(str);
             nometabela.Add("GLebas");
 
-            str = "SELECT * FROM Quadras where  (ALLTRIM(DTOS(FIM)) = '') AND (ALLTRIM(QUA) <> '' ) ORDER BY GLEBA,QUA";
+            str = "SELECT * FROM Quadras where  (ALLTRIM(DTOS(FIM)) = '') AND (ALLTRIM(QUA) <> '' ) "
+                + filtroSetorQuadra
+                + " ORDER BY GLEBA,QUA";
             sql.Add(str);
             nometabela.Add("QUADRAS");
 
@@ -151,6 +171,11 @@ namespace ApoioContabilidade.Services
                     for (int i = 0; i < dsTabelasIniciais.Tables.Count; i++)
                     {
                         dsTabelasIniciais.Tables[i].TableName = nometabela[i].ToUpper().Trim();
+                        // B10 (2026-05-11): AcceptChanges defensivo. Api_QueryMulti devolve linhas
+                        // como RowState=Added; sem isso, qualquer save-loop futuro
+                        // que decida por RowState ia tratar TODAS as linhas como novas
+                        // (mesmo bug que mordeu FrmCltCodig em 2026-05-08).
+                        dsTabelasIniciais.Tables[i].AcceptChanges();
                     }
                 }
                 inprocess = false;

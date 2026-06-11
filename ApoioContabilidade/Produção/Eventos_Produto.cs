@@ -227,21 +227,30 @@ namespace ApoioContabilidade.Produção.Servicos
                     DataSet dsDados = await ApiServices.Api_QueryMulti(lststr);
                     if ((dsDados == null) || (dsDados.Tables.Count == 0)) return false;
 
+                    // B10 (2026-05-11): AcceptChanges defensivo em TODAS as cópias.
+                    // Antes só tabProdLote tinha — as outras 6 ficavam com RowState=Added,
+                    // o que vira bug se algum save-loop futuro iterar por RowState.
                     tabFruta = dsDados.Tables[0].Copy();
                     tabFruta.TableName = "FRUTA";
+                    tabFruta.AcceptChanges();
                     tabDestino = dsDados.Tables[1].Copy();
                     tabDestino.TableName = "DESTINO";
+                    tabDestino.AcceptChanges();
                     tabSobra = dsDados.Tables[2].Copy();
                     tabSobra.TableName = "SOBRA";
+                    tabSobra.AcceptChanges();
                     tabProdMov = dsDados.Tables[3].Copy();
                     tabProdMov.TableName = "PRODMOV";
+                    tabProdMov.AcceptChanges();
                     tabProdLote = dsDados.Tables[4].Copy();
                     tabProdLote.TableName = "PRODLOTE";
                     tabProdLote.AcceptChanges();
                     tabTriagMov = dsDados.Tables[5].Copy();
                     tabTriagMov.TableName = "TRIAGMOV";
+                    tabTriagMov.AcceptChanges();
                     tabRec = dsDados.Tables[6].Copy();
                     tabRec.TableName = "SEGUE";
+                    tabRec.AcceptChanges();
                 }
             }
             catch (Exception)

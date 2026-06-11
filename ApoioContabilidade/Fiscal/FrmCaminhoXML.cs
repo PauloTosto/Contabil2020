@@ -26,9 +26,10 @@ namespace ApoioContabilidade.Fiscal
             InitializeComponent();
             ListaCaminhos = new Dictionary<string, string>();
 
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + Configura_XML_NF.fileConfigXML))
+            // B8 fix 2026-05-08: AppPaths.GetConfigPath em vez de concat de enum.
+            if (File.Exists(AppPaths.GetConfigPath(Configura_XML_NF.fileConfigXML)))
             {
-                ListaCaminhos = AcessosStream.LeiaLista(Environment.SpecialFolder.LocalApplicationData + Configura_XML_NF.fileConfigXML);
+                ListaCaminhos = AcessosStream.LeiaLista(AppPaths.GetConfigPath(Configura_XML_NF.fileConfigXML));
                 CNPJ = ListaCaminhos["CNPJ"];
                 PATHNFE = ListaCaminhos["CAMINHOXML"];
                 CUF = ListaCaminhos["CUF"];
@@ -66,7 +67,7 @@ namespace ApoioContabilidade.Fiscal
 
             try
             {
-                AcessosStream.WriteLista(Environment.SpecialFolder.LocalApplicationData + Configura_XML_NF.fileConfigXML, ListaCaminhos);
+                AcessosStream.WriteLista(AppPaths.GetConfigPath(Configura_XML_NF.fileConfigXML), ListaCaminhos);
             }
             catch (Exception)
             {

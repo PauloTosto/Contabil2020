@@ -264,6 +264,10 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                     for (int i = 0; i < dsTabelasTrab.Tables.Count; i++)
                     {
                         dsTabelasTrab.Tables[i].TableName = nometabela[i].ToUpper().Trim();
+                        // B10 (2026-05-11): AcceptChanges defensivo. Api_QueryMulti devolve linhas
+                        // como RowState=Added; sem isso, qualquer save-loop futuro
+                        // que decida por RowState ia tratar TODAS as linhas como novas.
+                        dsTabelasTrab.Tables[i].AcceptChanges();
                         atualizado.Add(nometabela[i].ToUpper().Trim(), true);
                     }
                 }

@@ -1,5 +1,6 @@
 ﻿using ApoioContabilidade.Models;
 using ApoioContabilidade.Services;
+using ApoioContabilidade.Trabalho.FormsPesquisa;
 using ApoioContabilidade.Trabalho.Models;
 using ApoioContabilidade.Trabalho.ServicesTrab;
 using ClassFiltroEdite;
@@ -97,20 +98,80 @@ namespace ApoioContabilidade.Trabalho
 
         private async void btnConsulta_Click(object sender, EventArgs e)
         {
-            ServicoFiltroTrab servicoFiltroTrab = new ServicoFiltroTrab(dtData1.Value, servPonto);
-
-            bool result = await servicoFiltroTrab.FiltroTrabMovRapidoNovo();
-            if (result == false)
+            // 2026-05-08: WaitCursor + botão desabilitado para feedback visual durante
+            // o filtro (FiltroTrabMovRapidoNovo faz queries pesadas no servidor).
+            // Sem isso, operador não sabe que está processando — percepção de lentidão.
+            UseWaitCursor = true;
+            btnConsulta.Enabled = false;
+            try
             {
-                return;
+                ServicoFiltroTrab servicoFiltroTrab = new ServicoFiltroTrab(dtData1.Value, servPonto);
+
+                bool result = await servicoFiltroTrab.FiltroTrabMovRapidoNovo();
+                if (result == false)
+                {
+                    return;
+                }
+                FrmCltPonto frmCltPonto = new FrmCltPonto(servicoFiltroTrab);
+                frmCltPonto.tsLabelSemana.Text = "SEMANA:" + dtData1.Value.ToString("dd/MM/yyyy");
+                frmCltPonto.frmConsultaTrab = this; // ref consulta
+                frmCltPonto.StartPosition = FormStartPosition.CenterScreen;
+                if (txAdministrador.Text.Trim() == "Edite")
+                    frmCltPonto.administrador = true;
+                frmCltPonto.Show();
             }
-            FrmCltPonto frmCltPonto = new FrmCltPonto(servicoFiltroTrab);
-            frmCltPonto.tsLabelSemana.Text = "SEMANA:" + dtData1.Value.ToString("dd/MM/yyyy");
-            frmCltPonto.frmConsultaTrab = this; // ref consulta
-            frmCltPonto.StartPosition = FormStartPosition.CenterScreen;
-            if (txAdministrador.Text.Trim() == "Edite")
-                frmCltPonto.administrador = true;
-            frmCltPonto.Show();
+            finally
+            {
+                UseWaitCursor = false;
+                btnConsulta.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Abre busca GLOBAL de trabalhador (qualquer fazenda) — caso "primeiro
+        /// lançamento de trabalhador eventual sem código conhecido".
+        /// Adicionado 2026-05-11.
+        /// </summary>
+        private async void btnBuscaGlobal_Click(object sender, EventArgs e)
+        {
+            string codigo;
+            string nome;
+            using (FrmBuscaTrabGlobal dlg = new FrmBuscaTrabGlobal(dtData1.Value))
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                codigo = dlg.CodigoSelecionado;
+                nome = dlg.NomeSelecionado;
+            }
+            if (string.IsNullOrEmpty(codigo)) return;
+
+            // Mesma chamada que faríamos pra consulta nominal por código — passa
+            // pelo filtro do FiltroTrabMovRapidoNovo como "trab != ''", ou seja,
+            // sem aplicar escopo de SETOR (intent explícito do usuário).
+            UseWaitCursor = true;
+            btnBuscaGlobal.Enabled = false;
+            try
+            {
+                ServicoFiltroTrab servicoFiltroTrab = new ServicoFiltroTrab(dtData1.Value, servPonto);
+                bool result = await servicoFiltroTrab.FiltroTrabMovRapidoNovo(codigo);
+                if (!result)
+                {
+                    MessageBox.Show("Não foi possível carregar dados de " + codigo + " " + nome + ".",
+                        "Busca global", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                FrmCltPonto frmCltPonto = new FrmCltPonto(servicoFiltroTrab);
+                frmCltPonto.tsLabelSemana.Text = "SEMANA:" + dtData1.Value.ToString("dd/MM/yyyy") + "  [eventual: " + nome + "]";
+                frmCltPonto.frmConsultaTrab = this;
+                frmCltPonto.StartPosition = FormStartPosition.CenterScreen;
+                if (txAdministrador.Text.Trim() == "Edite")
+                    frmCltPonto.administrador = true;
+                frmCltPonto.Show();
+            }
+            finally
+            {
+                UseWaitCursor = false;
+                btnBuscaGlobal.Enabled = true;
+            }
         }
 
 

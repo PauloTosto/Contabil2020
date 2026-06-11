@@ -91,10 +91,11 @@ namespace ApoioContabilidade.Almoxarifado.ServicesAlmox
         public void PegDadosConfigurações()
         {
             Dictionary<string, object> ListaCaminhosXML;
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString()))
+            // B8 fix 2026-05-08: AppPaths.GetConfigPath em vez de concat de enum.
+            if (File.Exists(AppPaths.GetConfigPath(Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString())))
             {
-                ListaCaminhosXML = AcessosStream.LeiaListaInsumos(Environment.SpecialFolder.LocalApplicationData +
-                    Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString());
+                ListaCaminhosXML = AcessosStream.LeiaListaInsumos(
+                    AppPaths.GetConfigPath(Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString()));
                 Configura_Almox_Saidas.INS_CK_SDONEGATIVO = ListaCaminhosXML["INS_CK_SDONEGATIVO"];
                 Configura_Almox_Saidas.INS_CK_SETOREXCLUSIVE = ListaCaminhosXML["INS_CK_SETOREXCLUSIVE"];
                 Configura_Almox_Saidas.INS_CK_SUGERE = ListaCaminhosXML["INS_CK_SUGERE"];
@@ -112,8 +113,9 @@ namespace ApoioContabilidade.Almoxarifado.ServicesAlmox
 
                 try
                 {
-                    AcessosStream.WriteListaInsumos(Environment.SpecialFolder.LocalApplicationData + Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString(),
-                            ListaCaminhosXML);
+                    AcessosStream.WriteListaInsumos(
+                        AppPaths.GetConfigPath(Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString()),
+                        ListaCaminhosXML);
                 }
                 catch (Exception)
                 {
@@ -148,12 +150,13 @@ namespace ApoioContabilidade.Almoxarifado.ServicesAlmox
             ListaCaminhosXML.Add("INS_STR_DEPOSITO", Configura_Almox_Saidas.INS_STR_DEPOSITO);
             ListaCaminhosXML.Add("INS_INI_DTAPESQUISA", Configura_Almox_Saidas.INS_INI_DTAPESQUISA);
 
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString()))
+            if (File.Exists(AppPaths.GetConfigPath(Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString())))
             {
                 try
                 {
-                    AcessosStream.WriteListaInsumos(Environment.SpecialFolder.LocalApplicationData + Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString(),
-                            ListaCaminhosXML);
+                    AcessosStream.WriteListaInsumos(
+                        AppPaths.GetConfigPath(Configura_Almox_Saidas.fileConfigInsumosSaidas.ToString()),
+                        ListaCaminhosXML);
                 }
                 catch (Exception)
                 {

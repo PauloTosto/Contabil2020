@@ -21,7 +21,6 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
         public MonteGrid oTrabNoturno;
         public MonteGrid oTrabMovAnterior;
         public MonteGrid oTrabNoturnoAnterior;
-        public MonteGrid oTrabPremio;
 
 
         public MonteGrid oAtividade;
@@ -32,7 +31,6 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
        // public ArmeEdicao EdtTrabcad;
         public ArmeEdicao EdtTrabMov;
         public ArmeEdicao EdtTrabNoturno;
-        public ArmeEdicao EdtTrabPremio;
         // public ArmeEdicao EdtTrabMovAnterior;
         // public ArmeEdicao EdtTrabNoturnoAnterior;
 
@@ -142,15 +140,7 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
             oTrabNoturnoAnterior.AddValores("DIARIA", "Diaria", 10, "###,##0.00", false, 0, "");
 
 
-            oTrabPremio = new MonteGrid();
-            oTrabPremio.Clear();
-            oTrabPremio.AddValores("FAZMOV", "Centro", 6, "", false, 0, "");
-            oTrabPremio.AddValores("BL", "Quadra", 6, "", false, 0, "");
-            oTrabPremio.AddValores("NUM_MOD", "Modelo", 25, "", false, 0, "");
-            oTrabPremio.AddValores("CODSER", "Serviço", 25, "", false, 0, "");
-            oTrabPremio.AddValores("DTA_INI", "Inicio", 10, "", false, 0, "");
-            oTrabPremio.AddValores("DTA_FIM", "Fim", 10, "", false, 0, "");
-            oTrabPremio.AddValores("VALOR", "Valor Premio", 12, "####0.00", false, 0, "");
+            // 2026-05-08: oTrabPremio MonteGrid removido (aba Premio descontinuada).
         }
 
         //// EDIÇÃO
@@ -166,8 +156,13 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
                 EdtTrabMov.MonteEdicao();
                 result = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Bug fix 2026-05-07: try/catch{} silencioso engolia erros de configuração
+                // de combos/edits, fazendo a edição quebrar sem aviso. Agora loga e avisa.
+                System.Diagnostics.Debug.WriteLine($"[EditaCltPonto.MonteEditCltPonto] {ex}");
+                MessageBox.Show("Erro ao montar edição Diurno: " + ex.Message,
+                    "FrmCltPonto", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return result;
         }
@@ -184,30 +179,17 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
                 EdtTrabNoturno.MonteEdicao();
                 result = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                // Bug fix 2026-05-07: try/catch{} silencioso engolia erros.
+                System.Diagnostics.Debug.WriteLine($"[EditaCltPonto.MonteEditCltPontoNoturno] {ex}");
+                MessageBox.Show("Erro ao montar edição Noturno: " + ex.Message,
+                    "FrmCltPonto", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             return result;
         }
 
-        public bool MonteEditCltPontoPremio(BindingSource bindSoure)
-        {
-            bool result = false;
-            if ((oTrabPremio == null) || (oTrabPremio.oDataGridView == null) || (oTrabPremio.oDataGridView.DataSource == null))
-                return result;
-            try
-            {
-                EdtTrabPremio = new ArmeEdicao(bindSoure);
-                MonteEditeTrabPremio(bindSoure);
-                EdtTrabPremio.MonteEdicao();
-                result = true;
-            }
-            catch (Exception)
-            {
-            }
-            return result;
-        }
-
+        // 2026-05-08: MonteEditCltPontoPremio removido (aba Premio nunca foi usada).
 
 
         // Centros Resultado
@@ -226,40 +208,20 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
         const int Quant_trabMov = 12;
         const int Diaria_trabMov = 13;
 
-        private BindingSource glebaSource;
-        private BindingSource quadraSource;
-        private BindingSource servicoSource;
-
         private BindingSource SourceTrabMov;
+
+        // B4 fix 2026-05-08: removidos os fields privados glebaSource/quadraSource/servicoSource
+        // e os BindingSources locais modeloSource/setorSource — todos eram criados,
+        // populados a partir de DadosComum.* mas NUNCA atribuídos a nenhum controle nem
+        // lidos por outro método. Os ComboMDInverte2/ComboBoxMD2 abaixo já recebem
+        // os DataViews diretamente das DadosComum.*Combo via parâmetro, sem passar
+        // pelos BindingSources intermediários. Dead code redundante.
 
         private void MonteEditeTrabMov(BindingSource bmTrabMov)
         {
             try
             {
                 SourceTrabMov = bmTrabMov;
-
-                // modelos-Serviço
-                BindingSource modeloSource = new BindingSource();
-                modeloSource.DataSource = DadosComum.ModeloCombo.Copy().AsDataView();
-
-                servicoSource = new BindingSource();
-                servicoSource.DataSource = DadosComum.ServicoModeloCombo.Copy().AsDataView();
-
-
-                // setor-glebas-quadras
-                BindingSource setorSource = new BindingSource();
-                setorSource.DataSource = DadosComum.SetoresCombo.Copy().AsDataView();
-
-
-                glebaSource = new BindingSource();
-
-                glebaSource.DataSource = DadosComum.GlebasCombo.Copy().AsDataView();
-
-
-
-                quadraSource = new BindingSource();
-                quadraSource.DataSource = DadosComum.QuadrasCombo.Copy().AsDataView();
-
 
                 EdtTrabMov.Clear();
 
@@ -362,29 +324,6 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
             {
                 SourceTrabMov = bmTrabMovNoturno;
 
-                // modelos-Serviço
-                BindingSource modeloSource = new BindingSource();
-                modeloSource.DataSource = DadosComum.ModeloCombo.Copy().AsDataView();
-
-                servicoSource = new BindingSource();
-                servicoSource.DataSource = DadosComum.ServicoModeloCombo.Copy().AsDataView();
-
-
-                // setor-glebas-quadras
-                BindingSource setorSource = new BindingSource();
-                setorSource.DataSource = DadosComum.SetoresCombo.Copy().AsDataView();
-
-
-                glebaSource = new BindingSource();
-
-                glebaSource.DataSource = DadosComum.GlebasCombo.Copy().AsDataView();
-
-
-
-                quadraSource = new BindingSource();
-                quadraSource.DataSource = DadosComum.QuadrasCombo.Copy().AsDataView();
-
-
                 EdtTrabNoturno.Clear();
 
                 Linha olinha = new Linha("Linha 1");
@@ -478,141 +417,9 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
             { throw; }
         }
 
-        const int Inicio_Premio = 4;
-        const int Fim_Premio = 5;
-        const int Valor_Premio = 6;
+        // 2026-05-08: MonteEditeTrabPremio + helpers Inicio_Fim_Validated/Premio_Valor/Frm_CampoValidado
+        // removidos junto com a aba Premio (feature April 2021 nunca usada — 0 registros NOTURNO='P').
 
-        private void MonteEditeTrabPremio(BindingSource bmTrabMovPremio)
-        {
-            try
-            {
-                SourceTrabMov = bmTrabMovPremio;
-
-                // modelos-Serviço
-                BindingSource modeloSource = new BindingSource();
-                modeloSource.DataSource = DadosComum.ModeloCombo.Copy().AsDataView();
-
-                servicoSource = new BindingSource();
-                servicoSource.DataSource = DadosComum.ServicoModeloCombo.Copy().AsDataView();
-
-
-                // setor-glebas-quadras
-                BindingSource setorSource = new BindingSource();
-                setorSource.DataSource = DadosComum.SetoresCombo.Copy().AsDataView();
-
-
-                glebaSource = new BindingSource();
-
-                glebaSource.DataSource = DadosComum.GlebasCombo.Copy().AsDataView();
-
-
-
-                quadraSource = new BindingSource();
-                quadraSource.DataSource = DadosComum.QuadrasCombo.Copy().AsDataView();
-
-
-                EdtTrabPremio.Clear();
-
-                Linha olinha = new Linha("Linha 1");
-                ComboMDInverte2 comboset = new ComboMDInverte2();
-                comboset.ConfigureComboBoxFilhoNeto(olinha,
-                       bmTrabMovPremio,
-                       oTrabPremio.oDataGridView.Columns[GLEBA_trabMov].DataPropertyName,
-                       oTrabPremio.oDataGridView.Columns[QUADRA_trabMov].DataPropertyName,
-                         DadosComum.GlebasCombo.AsEnumerable().Where(row => row.Field<string>("SETOR").Trim() != ""
-                              && row.Field<string>("GLEBA").Trim() != ""
-                          ).CopyToDataTable().AsDataView(),
-                       DadosComum.QuadrasCombo.AsEnumerable().Where(row => row.Field<string>("SETOR").Trim() != ""
-                       && row.Field<string>("GLEBA").Trim() != ""
-                        && row.Field<string>("QUADRA").Trim() != ""
-                    ).CopyToDataTable().AsDataView()
-                     );
-
-                EdtTrabPremio.Add(olinha);
-
-                olinha = new Linha("Linha 2");
-                ComboBoxMD2 combomodserv = new ComboBoxMD2();
-                combomodserv.ConfigureComboBoxPaiFilho(olinha,
-                       bmTrabMovPremio,
-                       oTrabPremio.oDataGridView.Columns[MODELO_trabMov].DataPropertyName,
-                       oTrabPremio.oDataGridView.Columns[SERVICO_trabMov].DataPropertyName,
-                          DadosComum.ModeloCombo.Copy().AsDataView(),
-                       DadosComum.ServicoModeloCombo.Copy().AsDataView());
-
-
-                EdtTrabPremio.Add(olinha);
-
-               
-
-                olinha = new Linha("Linha 3");
-                olinha.TextoConfigure(bmTrabMovPremio, oTrabPremio.oDataGridView.Columns[Inicio_Premio], new MaskedTextBox());
-                ((MaskedTextBox)olinha.oedite[0]).Validated += Inicio_Fim_Validated;
-
-                olinha.TextoConfigure(bmTrabMovPremio, oTrabPremio.oDataGridView.Columns[Fim_Premio], new MaskedTextBox());
-                ((MaskedTextBox)olinha.oedite[1]).Validated += Inicio_Fim_Validated;
-                EdtTrabPremio.Add(olinha);
-
-                olinha = new Linha("Linha 4");
-                olinha.TextoConfigure(bmTrabMovPremio, oTrabPremio.oDataGridView.Columns[Valor_Premio], new NumericTextBox());
-                olinha.oedite[0].Validated += Frm_CampoValidado;
-                olinha.oedite[0].Validating += Premio_Valor;
-                EdtTrabPremio.Add(olinha);
-
-                // teste do control composto       
-
-            }
-            catch (Exception E)
-            { throw; }
-        }
-
-        private void Inicio_Fim_Validated(object sender, EventArgs e)
-        {
-            // COMPARAR DATAS DE EMISSAO
-            try
-            {
-                
-              // ((MaskedTextBox) EdtMestre.Linhas[4 - 1].oedite[0]).Text = (sender as MaskedTextBox).Text;
-
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-        }
-        void Premio_Valor(object sender, CancelEventArgs e)
-        {
-            string texto = ((NumericTextBox)sender).Text;
-            Decimal valor = 0;
-            try
-            {
-                valor = Convert.ToDecimal(texto);
-            }
-            catch (Exception)
-            {
-            }
-            if (valor <= Convert.ToDecimal(0.009))
-            {
-                e.Cancel = true; // NÃO ACEITA CAMPO ZERADO
-                                 // { texto = texto.Substring(0, 8); }
-                Error_Set(sender as Control, "Valor Não pode ser <= 0");
-
-                try
-                {
-                    ((NumericTextBox)sender).DataBindings[0].ReadValue();
-                }
-                catch (Exception)
-                {
-                }
-                return;
-            }
-        }
-        void Frm_CampoValidado(object sender, EventArgs e)
-        {
-            // string textoOrigem = ((ComboBox)sender).
-            Error_Set(sender as Control, "");
-
-        }
         private void EditaCltPonto_Enter1(object sender, EventArgs e)
         {
             // implementar
@@ -644,7 +451,9 @@ namespace ApoioContabilidade.Trabalho.ConfigComponentes
             string ttext = (sender as TextBox).Text.PadRight(2);
             if (!evt_Ponto.servPonto.ListaCodigo.ContainsKey(ttext))
             {
-                e.Cancel = true; 
+                // R5 fix (2026-05-08): NÃO usar `e.Cancel = true` — antes prendia o operador
+                // no campo DIA com código inválido, impedindo até navegação reversa.
+                // Erro fica visível ('??') e o valor é revertido; operador pode navegar livre.
                 Error_Set(sender as Control, "??");
 
                 try
