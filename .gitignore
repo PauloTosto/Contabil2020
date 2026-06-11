@@ -47,3 +47,6 @@ Desktop.ini
 appsettings.Development.json
 appsettings.Local.json
 .env
+
+## Claude Code (worktrees e config local)
+.claude/
