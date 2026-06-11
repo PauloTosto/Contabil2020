@@ -1,4 +1,5 @@
-﻿using ApoioContabilidade.Models;
+﻿using ApoioContabilidade.Core;
+using ApoioContabilidade.Models;
 using ApoioContabilidade.Services;
 using ApoioContabilidade.Trabalho.ConfigComponentes;
 using ClassFiltroEdite;
@@ -19,12 +20,14 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
         const int SEMANAS_ANT = 28;
         const int SEMANAS_ANT_2 = 56;
         const string CODSERV_PONTOPROVISORIO = "943";
+        // 2026-05-12: alias público pra callers externos (FrmCltPonto, FrmRetificarProvisorio)
+        // sem precisar duplicar a constante. Mantém a const interna pra uso local.
+        public const string CODSERV_PONTOPROVISORIO_PUBLIC = "943";
         public ServCltPonto servPonto;
         public DataTable dtTrabMov = null;
         public DataTable dtTrabMovAnt = null;
         public DataTable dtTrabNoturno = null;
         public DataTable dtTrabMovNotAnt = null;
-        public DataTable dtTrabPremio = null;
 
         public DataTable dtTrabCad = null;
 
@@ -32,7 +35,6 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
         public BindingSource bmTrabMov = new BindingSource();
         public BindingSource bmTrabNoturno = new BindingSource();
         public BindingSource bmTrabMovAnt = new BindingSource();
-        public BindingSource bmTrabPremio = new BindingSource();
         //public BindingSource bmTrabMovNotAnt = new BindingSource();
 
         DataTable CltCadastroCompleto;
@@ -131,26 +133,6 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                     bmTrabNoturno.DataSource = dtTrabNoturno.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView();
                 }
 
-                try
-                {   // MovTrabPremio em abril 2021
-
-                    var dado = dtTrabPremio.AsEnumerable().Where(row =>
-                       (!row.IsNull("TRAB")) &&
-                       (row.Field<string>("TRAB").Trim() == trab)
-                        && (row.Field<DateTime>("DATA").CompareTo(semana) == 0)
-
-                        );
-                    if ((dado != null))
-                    { bmTrabPremio.DataSource = dado.AsDataView(); }
-                    else { bmTrabPremio.DataSource = dtTrabPremio.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView(); }
-
-                }
-                catch (Exception)
-                {
-                    bmTrabPremio.DataSource = dtTrabPremio.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView();
-                }
-
-
 
                 try
                 {   // MovTrabAnterior
@@ -184,9 +166,6 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             {
                 bmTrabMov.DataSource = dtTrabMov.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView();
                 bmTrabNoturno.DataSource = dtTrabNoturno.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView();
-               // abril 2021
-                bmTrabPremio.DataSource = dtTrabPremio.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView();
-
                 bmTrabMovAnt.DataSource = dtTrabMovAnt.AsEnumerable().Where(row => row.IsNull("ID")).AsDataView();
 
             }
@@ -337,8 +316,9 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                     &&
                     (dadosSetor.Count == 0 ? true : dadosSetor.Contains(row.Field<string>("SETOR")))
                     &&
-                    (txNome == "" ? true : txNome.Substring(0, txNome.Length)
-                                            == row.Field<string>("NOMECAD").Substring(0, txNome.Length))
+                    // Bug fix 2026-05-08: filtro de nome usava Substring que crashava se
+                    // txNome.Length > NOMECAD.Length. StartsWith é equivalente e seguro.
+                    (txNome == "" ? true : row.Field<string>("NOMECAD").StartsWith(txNome))
                     &&
                     (lstFiltroMestreTrab.Count == 0 ? true : lstFiltroMestreTrab.Contains(row.Field<string>("CODCAD")))
 
@@ -351,8 +331,9 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                     &&
                     (dadosSetor.Count == 0 ? true : dadosSetor.Contains(row.Field<string>("SETOR")))
                     &&
-                    (txNome == "" ? true : txNome.Substring(0, txNome.Length)
-                                            == row.Field<string>("NOMECAD").Substring(0, txNome.Length))
+                    // Bug fix 2026-05-08: filtro de nome usava Substring que crashava se
+                    // txNome.Length > NOMECAD.Length. StartsWith é equivalente e seguro.
+                    (txNome == "" ? true : row.Field<string>("NOMECAD").StartsWith(txNome))
                     &&
                     (lstFiltroMestreTrab.Count == 0 ? false : lstFiltroMestreTrab.Contains(row.Field<string>("CODCAD")))
 
@@ -366,8 +347,9 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                     &&
                     (dadosSetor.Count == 0 ? true : dadosSetor.Contains(row.Field<string>("SETOR")))
                     &&
-                    (txNome == "" ? true : txNome.Substring(0, txNome.Length)
-                                            == row.Field<string>("NOMECAD").Substring(0, txNome.Length))
+                    // Bug fix 2026-05-08: filtro de nome usava Substring que crashava se
+                    // txNome.Length > NOMECAD.Length. StartsWith é equivalente e seguro.
+                    (txNome == "" ? true : row.Field<string>("NOMECAD").StartsWith(txNome))
                     &&
                     (lstFiltroMestreTrabAnterior.Count == 0 ? false : lstFiltroMestreTrabAnterior.Contains(row.Field<string>("CODCAD")))
 
@@ -455,9 +437,12 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             e.Row["DIA6"] = "";
             e.Row["DIA7"] = "";
             e.Row["FAZMOV"] = ""; // centro
-            e.Row["BL"] = ""; // centro
-            e.Row["CODSER"] = "";
-            e.Row["NUM_MOD"] = "";
+            e.Row["BL"] = ""; // BL (Quadra) opcional no noturno: vigia cobre gleba inteira
+            // 2026-05-07: pré-selecionar MODELO=16 (ADMINISTRACAO) + CODSER=3 (VIGILANCIA),
+            // que é o padrão do vigia/plantão noturno. Operador pode trocar se precisar.
+            // Formato: NUM_MOD nchar(2) sem padding, CODSER nchar(3) right-aligned.
+            e.Row["NUM_MOD"] = "16";
+            e.Row["CODSER"] = "3".PadLeft(3); // "  3"
             e.Row["QUANT"] = 0;
             e.Row["OK"] = "";
             e.Row["DIARIA"] = 0;
@@ -466,90 +451,215 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             e.Row["TIPOMOV"] = "D";
             e.Row["NREG"] = 0;
         }
-        public void DtTrabMovPremio_TableNewRow(object sender, DataTableNewRowEventArgs e)
+        // 2026-05-08: DtTrabMovPremio_TableNewRow removido (aba Premio descontinuada).
+
+        /// <summary>
+        /// Converte o valor de uma célula para double com defesa contra DBNull/null.
+        /// Sem isso, validators explodiam com InvalidCastException ao encontrar
+        /// QUANT/VALOR null em registros recém-criados ou vindos do banco como NULL.
+        /// Adicionado 2026-05-08 (bug fix).
+        /// </summary>
+        private static double ToDoubleSafe(object value, double valorPadrao = 0)
         {
-            DataRow orow = null;
+            if (value == null || value == DBNull.Value) return valorPadrao;
+            try { return Convert.ToDouble(value); }
+            catch (Exception) { return valorPadrao; }
+        }
+
+        /// <summary>
+        /// Valida campos obrigatórios de um lançamento CLTPONTO antes de gravar.
+        /// Retorna null se OK, ou mensagem específica listando o que faltou/está inválido.
+        ///
+        /// 2026-05-08 (B11): substitui o "Dados Inconsistentes com padrão" genérico,
+        /// que era a última linha de defesa após R5 ter removido o e.Cancel dos
+        /// validators dos combos. Agora o usuário sabe exatamente qual campo corrigir.
+        /// </summary>
+        private static string ValidaCamposObrigatorios(DataRow orow)
+        {
+            var faltas = new System.Collections.Generic.List<string>();
+
+            // Comuns a todos os tipos de lançamento
+            if (orow["FAZMOV"].ToString().Trim() == "") faltas.Add("Gleba (FAZMOV)");
+            if (orow["NUM_MOD"].ToString().Trim() == "") faltas.Add("Modelo");
+            if (orow["CODSER"].ToString().Trim() == "") faltas.Add("Serviço");
+            if (orow.IsNull("DATA")) faltas.Add("Data");
+
+            bool isPremio = orow["NOTURNO"].ToString().Trim() == "P";
+            if (isPremio)
+            {
+                // Premio descontinuado em abril/2021, mas mantido por defesa em
+                // profundidade caso row antiga venha do banco com NOTURNO='P'.
+                if (ToDoubleSafe(orow["VALOR"]) <= 0) faltas.Add("Valor (deve ser > 0)");
+                if (orow.IsNull("DTA_INI")) faltas.Add("Data Início");
+                if (orow.IsNull("DTA_FIM")) faltas.Add("Data Fim");
+                if (!orow.IsNull("DTA_INI") && !orow.IsNull("DTA_FIM")
+                    && Convert.ToDateTime(orow["DTA_FIM"]).CompareTo(Convert.ToDateTime(orow["DTA_INI"])) < 0)
+                {
+                    faltas.Add("Data Fim anterior à Data Início");
+                }
+            }
+            else
+            {
+                if (ToDoubleSafe(orow["QUANT"]) < 0) faltas.Add("Quantidade (deve ser >= 0)");
+                bool nenhumDia = orow["DIA1"].ToString().Trim() == ""
+                                 && orow["DIA2"].ToString().Trim() == ""
+                                 && orow["DIA3"].ToString().Trim() == ""
+                                 && orow["DIA4"].ToString().Trim() == ""
+                                 && orow["DIA5"].ToString().Trim() == ""
+                                 && orow["DIA6"].ToString().Trim() == ""
+                                 && orow["DIA7"].ToString().Trim() == "";
+                if (nenhumDia) faltas.Add("Pelo menos 1 dia da semana (DIA1..DIA7)");
+            }
+
+            if (faltas.Count == 0) return null;
+            return "Não foi possível salvar. Corrija:\n  • " + string.Join("\n  • ", faltas);
+        }
+
+        /// <summary>
+        /// Validação síncrona de "mês fechado" — bloqueia mudança em campos
+        /// congelados (DIA_n por dia individual, DATA, NOTURNO, BL, NUM_MOD, FAZMOV).
+        /// Retorna null se OK, string de erro caso contrário.
+        ///
+        /// NÃO valida CODSER aqui — isso depende de consulta async ao GRATIF.
+        /// CODSER é validado em ValidaMesFechadoAsync, chamado de AlteraRegistrosOk.
+        ///
+        /// Adicionado 2026-05-12.
+        /// </summary>
+        private static string ValidaMesFechadoSync(DataRow orow, DataRowState tipoMuda)
+        {
+            // Inserção: bloqueia se a SEMANA INTEIRA está em mês fechado.
+            // Semana cruzando virada (ex: 28/mai a 03/jun) é permitida pra preencher
+            // os dias do mês aberto.
+            if (tipoMuda == DataRowState.Added || tipoMuda == DataRowState.Detached)
+            {
+                if (orow.IsNull("DATA")) return null; // será pego pela validação de obrigatórios
+                DateTime dataNova = Convert.ToDateTime(orow["DATA"]);
+                if (RegrasMesFechado.SemanaInteiraEmMesFechado(dataNova))
+                {
+                    return "Não é possível inserir lançamento com data " +
+                           dataNova.ToString("dd/MM/yyyy") +
+                           " — toda a semana caiu em mês fechado. Solicite ao escritório.";
+                }
+                return null; // Insert em semana válida não tem campos congelados pra checar.
+            }
+
+            if (tipoMuda != DataRowState.Modified && tipoMuda != DataRowState.Deleted) return null;
+
+            // Original disponível só pra Modified e Deleted.
+            DateTime dataOrig = Convert.ToDateTime(orow["DATA", DataRowVersion.Original]);
+            var faltas = new System.Collections.Generic.List<string>();
+
+            // DATA: se mês fechado, não pode mudar (move semana inteira).
+            if (RegrasMesFechado.MesFechado(dataOrig))
+            {
+                if (tipoMuda == DataRowState.Modified)
+                {
+                    DateTime dataAtual = Convert.ToDateTime(orow["DATA"]);
+                    if (dataOrig != dataAtual)
+                        faltas.Add("DATA do lançamento (mês fechado)");
+                }
+                if (tipoMuda == DataRowState.Deleted)
+                {
+                    return "Não é possível remover lançamento de mês fechado (" +
+                           dataOrig.ToString("dd/MM/yyyy") + "). Solicite ao escritório.";
+                }
+            }
+
+            if (tipoMuda == DataRowState.Modified)
+            {
+                // DIA_n: cada um independentemente, baseado no dia REAL daquela célula.
+                for (int n = 1; n <= 7; n++)
+                {
+                    if (!RegrasMesFechado.DiaEstaFechado(dataOrig, n)) continue;
+                    string col = "DIA" + n;
+                    string ant = SafeStr(orow, col, DataRowVersion.Original);
+                    string atu = SafeStr(orow, col, DataRowVersion.Current);
+                    if (ant != atu)
+                        faltas.Add(col + " (dia " + dataOrig.AddDays(n - 1).ToString("dd/MM") + " em mês fechado)");
+                }
+
+                // Outros campos congelados em mês fechado (qualquer dia da semana fechado serve
+                // como gatilho — eles são por registro, não por dia).
+                if (RegrasMesFechado.MesFechado(dataOrig))
+                {
+                    if (Mudou(orow, "NOTURNO")) faltas.Add("NOTURNO (mês fechado)");
+                    if (Mudou(orow, "BL"))      faltas.Add("BL/Quadra (mês fechado)");
+                    if (Mudou(orow, "NUM_MOD")) faltas.Add("Modelo (mês fechado)");
+                    if (Mudou(orow, "FAZMOV"))  faltas.Add("Gleba/FAZMOV (mês fechado — afeta setor e rateio de custo)");
+                }
+            }
+
+            if (faltas.Count == 0) return null;
+            return "Não é possível alterar campos de lançamento em mês fechado:\n  • " +
+                   string.Join("\n  • ", faltas) +
+                   "\n\nPara retificar serviço (CODSER), use o botão 'Retificar provisório' " +
+                   "(disponível para lançamentos com CODSER=" + CODSERV_PONTOPROVISORIO + ").";
+        }
+
+        /// <summary>
+        /// Validação async — só checa CODSER vs GRATIF. Chamada de AlteraRegistrosOk
+        /// antes do save servidor. Retorna null se OK, string de erro caso contrário.
+        /// </summary>
+        private static async Task<string> ValidaMesFechadoCodserAsync(DataRow orow, DataRowState tipoMuda)
+        {
+            if (tipoMuda != DataRowState.Modified) return null;
+            DateTime dataOrig = Convert.ToDateTime(orow["DATA", DataRowVersion.Original]);
+            if (!RegrasMesFechado.MesFechado(dataOrig)) return null;
+
+            string codserAnt = SafeStr(orow, "CODSER", DataRowVersion.Original);
+            string codserAtu = SafeStr(orow, "CODSER", DataRowVersion.Current);
+            if (codserAnt == codserAtu) return null; // não mudou — nada a validar
+
+            string setorAtu = SafeStr(orow, "SETOR", DataRowVersion.Current);
+            DateTime mesRef = new DateTime(dataOrig.Year, dataOrig.Month, 1);
+
+            bool antTemPremio = await ServicoGratificacao.ServicoTemPremio(codserAnt, setorAtu, mesRef);
+            bool atuTemPremio = await ServicoGratificacao.ServicoTemPremio(codserAtu, setorAtu, mesRef);
+
+            if (antTemPremio || atuTemPremio)
+            {
+                return "Não é possível trocar CODSER de '" + codserAnt + "' para '" + codserAtu + "' " +
+                       "em mês fechado: pelo menos um dos serviços tem gratificação vigente em GRATIF " +
+                       "(setor " + setorAtu.Trim() + ", mês " + mesRef.ToString("MM/yyyy") + "). " +
+                       "Trocar criaria divergência com a folha já paga. Solicite ao escritório.";
+            }
+            return null;
+        }
+
+        private static string SafeStr(DataRow r, string col, DataRowVersion v)
+        {
             try
             {
-                if (bmTrabCad.Count > 0)
-                {
-                    orow = ((DataRowView)bmTrabCad.Current).Row;
-                }
+                if (!r.Table.Columns.Contains(col)) return "";
+                object o = r[col, v];
+                if (o == null || o == DBNull.Value) return "";
+                return o.ToString().Trim();
             }
-            catch (Exception)
-            {
-                MessageBox.Show("Trabalhador??");
-                throw;
-            }
-            if (orow == null) return;
-            e.Row["TRAB"] = orow["CODCAD"].ToString();
-            e.Row["DATA"] = semana.Date;
-            //e.Row["SEMANA"] = semana.Date;
-            e.Row["DIA1"] = "";
-            e.Row["DIA2"] = "";
-            e.Row["DIA3"] = "";
-            e.Row["DIA4"] = "";
-            e.Row["DIA5"] = "";
-            e.Row["DIA6"] = "";
-            e.Row["DIA7"] = "";
-            e.Row["FAZMOV"] = ""; // centro
-            e.Row["BL"] = ""; // centro
-            e.Row["CODSER"] = "";
-            e.Row["NUM_MOD"] = "";
-            e.Row["QUANT"] = 0;
-            e.Row["OK"] = "";
-            e.Row["DIARIA"] = 0;
-            e.Row["VALOR"] = 0;
-            e.Row["NOTURNO"] = "P";
-            e.Row["OBS"] = "";
-            e.Row["TIPOMOV"] = "D";
-            e.Row["DTA_INI"] = semana.Date;
-            e.Row["DTA_FIM"] = semana.Date;
-            e.Row["NREG"] = 0;
+            catch (Exception) { return ""; }
         }
+
+        private static bool Mudou(DataRow r, string col)
+        {
+            return SafeStr(r, col, DataRowVersion.Original) != SafeStr(r, col, DataRowVersion.Current);
+        }
+
         public void DtTrabMov_BeforeAlteraRegistros(object sender, AlteraRegistroEventArgs e)
         {
-
             DataRow orow = e.Rows[0];
-            if (orow["NOTURNO"].ToString().Trim() == "P")
+            string erro = ValidaCamposObrigatorios(orow);
+            if (erro != null)
             {
-                // abril 2021
-                if ((Convert.ToDouble(orow["VALOR"]) <= 0)
-                   || (orow["FAZMOV"].ToString().Trim() == "")
-                   || (orow["NUM_MOD"].ToString().Trim() == "")
-                   || (orow["CODSER"].ToString().Trim() == "")
-                   || (orow.IsNull("DATA"))
-                    || (orow.IsNull("DATA"))
-                   || (orow.IsNull("DTA_INI"))
-                   || (orow.IsNull("DTA_FIM"))
-                   || (Convert.ToDateTime(orow["DTA_FIM"]).CompareTo(Convert.ToDateTime(orow["DTA_INI"])) < 0)
-                   )
-                {
-                    MessageBox.Show("Dados Inconsistentes com padrão");
-                    e.Cancela = true;
-                    return;
-                }
-            }
-            else  if ((Convert.ToDouble(orow["QUANT"]) < 0)
-                    || (orow["FAZMOV"].ToString().Trim() == "")
-                    || (orow["NUM_MOD"].ToString().Trim() == "")
-                    || (orow["CODSER"].ToString().Trim() == "")
-                    || ((orow["DIA1"].ToString().Trim() == "") && (orow["DIA2"].ToString().Trim() == "") && (orow["DIA3"].ToString().Trim() == "")
-                       && (orow["DIA4"].ToString().Trim() == "") && (orow["DIA5"].ToString().Trim() == "") && (orow["DIA6"].ToString().Trim() == "")
-                       && (orow["DIA7"].ToString().Trim() == "")
-                        )
-                    || (orow.IsNull("DATA")))
-            {
-                MessageBox.Show("Dados Inconsistentes com padrão");
+                MessageBox.Show(erro, "Campos obrigatórios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 e.Cancela = true;
                 return;
             }
 
-            // Outras Inconsistencias que se Fizerem necessárias testar
-            try { }
-            catch (Exception)
+            // 2026-05-12: validação de mês fechado (parte síncrona — campos congelados puros).
+            // CODSER vs GRATIF é checado em AlteraRegistrosOk (precisa async).
+            string erroMes = ValidaMesFechadoSync(orow, e.TipoMuda);
+            if (erroMes != null)
             {
-                MessageBox.Show("ERRO");
+                MessageBox.Show(erroMes, "Mês fechado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 e.Cancela = true;
                 return;
             }
@@ -558,38 +668,36 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
         public async void DtTrabMov__AlteraRegistrosOk(object sender, AlteraRegistroEventArgs e)
         {
             DataRow orow = e.Rows[0];
-            if (orow["NOTURNO"].ToString().Trim() == "P")
+            // 2026-05-08 (B11): mesma validação que BeforeAlteraRegistros, agora via
+            // helper único com mensagem específica por campo. Mantida aqui também
+            // como cinto-suspensório: o pipeline pode chamar AlteraRegistrosOk sem
+            // ter passado por BeforeAlteraRegistros em alguns caminhos legados.
+            string erro = ValidaCamposObrigatorios(orow);
+            if (erro != null)
             {
-                // abril 2021
-                if ((Convert.ToDouble(orow["VALOR"]) <= 0)
-                   || (orow["FAZMOV"].ToString().Trim() == "")
-                   || (orow["NUM_MOD"].ToString().Trim() == "")
-                   || (orow["CODSER"].ToString().Trim() == "")
-                   || (orow.IsNull("DATA"))
-                   || (orow.IsNull("DTA_INI"))
-                   || (orow.IsNull("DTA_FIM"))
-                   || (Convert.ToDateTime(orow["DTA_FIM"]).CompareTo(Convert.ToDateTime(orow["DTA_INI"])) < 0)  
-                   )
-                {
-                    MessageBox.Show("Dados Inconsistentes com padrão");
-                    e.Cancela = true;
-                    return;
-                }
-            }
-            else if ((Convert.ToDouble(orow["QUANT"]) < 0)
-                 || (orow["FAZMOV"].ToString().Trim() == "")
-                 || (orow["NUM_MOD"].ToString().Trim() == "")
-                 || (orow["CODSER"].ToString().Trim() == "")
-                 || ((orow["DIA1"].ToString().Trim() == "") && (orow["DIA2"].ToString().Trim() == "") && (orow["DIA3"].ToString().Trim() == "")
-                    && (orow["DIA4"].ToString().Trim() == "") && (orow["DIA5"].ToString().Trim() == "") && (orow["DIA6"].ToString().Trim() == "")
-                    && (orow["DIA7"].ToString().Trim() == "")
-                     )
-                 || (orow.IsNull("DATA")))
-            {
-                MessageBox.Show("Dados Inconsistentes com padrão");
+                MessageBox.Show(erro, "Campos obrigatórios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 e.Cancela = true;
                 return;
             }
+
+            // 2026-05-12: validação de mês fechado — parte síncrona (cinto-suspensório
+            // do BeforeAlteraRegistros) + parte async (CODSER vs GRATIF).
+            string erroMesSync = ValidaMesFechadoSync(orow, e.TipoMuda);
+            if (erroMesSync != null)
+            {
+                MessageBox.Show(erroMesSync, "Mês fechado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                e.Cancela = true;
+                return;
+            }
+            string erroMesCodser = await ValidaMesFechadoCodserAsync(orow, e.TipoMuda);
+            if (erroMesCodser != null)
+            {
+                MessageBox.Show(erroMesCodser, "Mês fechado — gratificação",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                e.Cancela = true;
+                return;
+            }
+
             DataRowView rowmestre = null;
             try
             {
@@ -677,6 +785,49 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
 
             }
 
+            // 2026-05-11: audit log de CLTPONTO. Snapshot Antes/Depois capturado
+            // ANTES do AcceptChanges (que joga fora a versão Original). Falha no
+            // audit é logada via Debug.WriteLine mas NÃO bloqueia (não pode virar SPOF).
+            try
+            {
+                CltPontoSnapshot snapAntes = null;
+                CltPontoSnapshot snapDepois = null;
+                string opAudit = "?";
+                if (e.TipoMuda == DataRowState.Modified)
+                {
+                    opAudit = "U";
+                    snapAntes = CltPontoSnapshot.FromRow(orow, DataRowVersion.Original);
+                    snapDepois = CltPontoSnapshot.FromRow(orow, DataRowVersion.Current);
+                }
+                else if (e.TipoMuda == DataRowState.Added || e.TipoMuda == DataRowState.Detached)
+                {
+                    opAudit = "I";
+                    snapDepois = CltPontoSnapshot.FromRow(orow, DataRowVersion.Current);
+                }
+                else if (e.TipoMuda == DataRowState.Deleted)
+                {
+                    opAudit = "D";
+                    snapAntes = CltPontoSnapshot.FromRow(orow, DataRowVersion.Original);
+                }
+
+                int idAudit = 0;
+                try { if (!orow.IsNull("ID")) idAudit = Convert.ToInt32(orow["ID"]); } catch (Exception) { }
+                string trabAudit = orow["TRAB"]?.ToString().Trim() ?? "";
+                DateTime? dataAudit = null;
+                try { if (!orow.IsNull("DATA")) dataAudit = Convert.ToDateTime(orow["DATA"]); } catch (Exception) { }
+                string setorAudit = orow["SETOR"]?.ToString() ?? "";
+
+                // Fire-and-forget intencional: não esperar o audit pra continuar o save.
+                // Se falhar, Debug.WriteLine — não estoura UI nem bloqueia gravação.
+                _ = AuditService.RegistrarCltPontoAuditAsync(
+                    opAudit, SessaoAtual.Usuario, idAudit,
+                    trabAudit, dataAudit, setorAudit,
+                    snapAntes, snapDepois);
+            }
+            catch (Exception exAudit)
+            {
+                System.Diagnostics.Debug.WriteLine("[Audit CLTPONTO] falhou silenciosamente: " + exAudit);
+            }
 
             try
             {
@@ -688,8 +839,6 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                         AtualizaDados(bmTrabMov, bmTrabNoturno);
                     else if (orow["NOTURNO"].ToString().Trim() == "X")
                         AtualizaDados(bmTrabNoturno, bmTrabMov);
-                    /*else if (orow["NOTURNO"].ToString().Trim() == "P")
-                        AtualizaDados(bmTrabPremio, bmTrabMov);*/
                 }
                 catch (Exception) { }
             }
@@ -939,55 +1088,93 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
 
         public async Task<Boolean> FiltroTrabMovRapidoNovo(string trab = "")
         {
+            // F8 instrumentação 2026-05-08: medir tempo total + breakdown SQL vs processing.
+            var swTotal = System.Diagnostics.Stopwatch.StartNew();
+            long tApi = 0, tProcessing = 0;
             bool result = true;
             try
             {
-                string datastring = "";
-                if (trab != "") 
-                  datastring = " (TRAB = '"+trab+"') AND ";
-                
-                // (DATA BETWEEN '" + inicio.ToString("yyyy-MM-dd") + "' AND '" + fim.ToString("yyyy-MM-dd") + "') " +
-                string str = " (DATA >= CTOD('" + semana.AddDays(-SEMANAS_ANT).ToString("MM/dd/yyyy") + "') ) AND " +
-                        " (DATA <= CTOD('" + semana.AddDays(+6).ToString("MM/dd/yyyy") + "')) ORDER BY TRAB,DATA";
-                datastring = datastring + str;
-                
+                // F8 fix 2026-05-08: queries reescritas em T-SQL puro (sem dbo.CTOD, dbo.ALLTRIM,
+                // dbo.DTOS) pra permitir uso de índices. Combinado com índices em CLTPONTO(DATA,TIPOMOV)
+                // medido localmente: query CLTPONTO 22s → 0.1s; CLTCAD <0.05s.
+                // Datas vão direto em formato ISO 'yyyy-MM-dd' (SQL Server entende sem função).
+                // ADMI/DEMI/PRAZO são DATE (não string) — checar NULL em vez de alltrim(dtos)=''.
+                string dataInicio = semana.AddDays(-SEMANAS_ANT).ToString("yyyy-MM-dd");
+                string dataFim = semana.AddDays(+6).ToString("yyyy-MM-dd");
+                string semanaIso = semana.ToString("yyyy-MM-dd");
 
-                str = "SElect cltponto.id, data, cltponto.setor, fazmov, trab, tipomov, num_mod, codser,"
-                    + " quant, semana, valor, bl, ok, diaria, dia1, dia2, dia3, dia4, dia5, dia6, dia7, dta_ini,"
-                   + " dta_fim, obs, noturno,cltponto.nreg as nreg " +
-                   "     from cltponto where  TIPOMOV = 'D' AND "
-                  + datastring;
+                string filtroTrabPonto = (trab != "") ? " (TRAB = '" + trab + "') AND " : "";
 
+                // 2026-05-11: filtro de escopo por SETOR. Só aplica em CARGA GERAL (trab=="");
+                // consulta nominal (trab="X") sempre passa, porque é intent explícito do usuário
+                // (ex: clicou em "anterior" pra um trabalhador específico).
+                //
+                // Para CLTPONTO: filtra por cltponto.setor (setor do LANÇAMENTO, não do cadastro).
+                // Isso pega corretamente o caso "trabalhador eventual" — gerente B vê os pontos
+                // que o trabalhador X (cadastrado em A) lançou nas glebas de B, mas NÃO vê os
+                // pontos de X em A.
+                string filtroSetorPonto = "";
+                if (trab == "" && SessaoAtual.TemEscopoRestrito)
+                {
+                    // LTRIM+RTRIM: cltponto.setor é nchar(2) com padding inconsistente
+                    // (leading em dados legados Delphi/VFP, trailing em dados novos).
+                    filtroSetorPonto = " LTRIM(RTRIM(cltponto.setor)) IN (" +
+                        string.Join(",", SessaoAtual.Setores.Select(s => "'" + s.Replace("'", "''").Trim() + "'")) +
+                        ") AND ";
+                }
+
+                string str =
+                    "SELECT cltponto.id, data, cltponto.setor, fazmov, trab, tipomov, num_mod, codser, " +
+                    "       quant, semana, valor, bl, ok, diaria, dia1, dia2, dia3, dia4, dia5, dia6, dia7, dta_ini, " +
+                    "       dta_fim, obs, noturno, cltponto.nreg as nreg " +
+                    "FROM cltponto " +
+                    "WHERE " + filtroTrabPonto + filtroSetorPonto +
+                    "  TIPOMOV = 'D' " +
+                    "  AND DATA >= '" + dataInicio + "' " +
+                    "  AND DATA <= '" + dataFim + "' " +
+                    "ORDER BY TRAB, DATA";
 
                 List<string> lst = new List<string>();
                 lst.Add(str);
 
-               // string datastringdetalhe = "";
-                
-             datastring = "";
-             if (trab != "")
-                 datastring = " (CLTCAD.CODCAD = '" + trab + "') AND ";
+                string filtroTrabCad = (trab != "") ? " (CLTCAD.CODCAD = '" + trab + "') AND " : "";
 
-                str = "  (alltrim(dtos(admi)) <> '') AND  " +
-             " ( ADMI <= CTOD('" + semana.AddDays(+6).ToString("MM/dd/yyyy") +
-             " ') ) " +
-
-             " AND (((alltrim(dtos(cltcad.demi)) = '') AND (alltrim(dtos(cltcad.prazo)) = '')) OR "
-             + "  (substr(dtos(cltcad.demi), 1, 8) >= '" + semana.ToString("yyyyMMdd") + "')) ";
-
-
-                datastring = datastring + str; 
-               
+                // Para CLTCAD: trabalhador entra na lista se
+                //   (a) é cadastrado num setor autorizado (caso comum), OU
+                //   (b) lançou ponto em algum setor autorizado nesta janela (trabalhador eventual).
+                // Sem (b), gerente B nunca veria o trabalhador eventual e a lista de pontos
+                // ficaria órfã (CLTPONTO mostra ponto, CLTCAD não traz o cadastro pra cruzar).
+                string filtroSetorCad = "";
+                if (trab == "" && SessaoAtual.TemEscopoRestrito)
+                {
+                    string lista = string.Join(",", SessaoAtual.Setores.Select(s => "'" + s.Replace("'", "''").Trim() + "'"));
+                    // LTRIM+RTRIM: cltcad.setor e cltponto.setor são nchar(2) com padding
+                    // inconsistente (leading em dados legados Delphi/VFP, trailing em novos).
+                    filtroSetorCad =
+                        " ( LTRIM(RTRIM(CLTCAD.SETOR)) IN (" + lista + ") " +
+                        "   OR CLTCAD.CODCAD IN (SELECT trab FROM cltponto " +
+                        "                        WHERE LTRIM(RTRIM(cltponto.setor)) IN (" + lista + ") " +
+                        "                          AND data >= '" + dataInicio + "' " +
+                        "                          AND data <= '" + dataFim + "') " +
+                        " ) AND ";
+                }
 
                 str =
-                    "SElect ID,CODCAD,NOMECAD,GLECAD,SETOR,ADMI,DEMI,PRAZO,SALBASE,OPCAO,AVULSO,MENSALISTA   from cltcad where "
-                    + datastring + " order by NOMECAD ";
-
+                    "SELECT ID, CODCAD, NOMECAD, GLECAD, SETOR, ADMI, DEMI, PRAZO, SALBASE, OPCAO, AVULSO, MENSALISTA " +
+                    "FROM cltcad " +
+                    "WHERE " + filtroTrabCad + filtroSetorCad +
+                    "  admi IS NOT NULL " +
+                    "  AND admi <= '" + dataFim + "' " +
+                    "  AND ( (demi IS NULL AND prazo IS NULL) OR demi >= '" + semanaIso + "' ) " +
+                    "ORDER BY NOMECAD";
 
                 lst.Add(str);
 
-
+                var swApi = System.Diagnostics.Stopwatch.StartNew();
                 DataSet dsDados = await ApiServices.Api_QueryMulti(lst);
+                swApi.Stop();
+                tApi = swApi.ElapsedMilliseconds;
+                var swProc = System.Diagnostics.Stopwatch.StartNew();
                 
 
 
@@ -1021,10 +1208,7 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                 servPonto.tabListaTrab = servPonto.AdoLista();
 
                 dtTrabMov = dsDados.Tables[0].Clone();
-               // dtTrabMovAnt = dsDados.Tables[0].Clone();
                 dtTrabNoturno = dsDados.Tables[0].Clone();
-                // Acrescentado em abril 2021
-                dtTrabPremio = dsDados.Tables[0].Clone();
 
 
                 var rows = dsDados.Tables[0].AsEnumerable().Where(row =>
@@ -1068,18 +1252,8 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                     {
                     }
 
-                    try
-                    {
-                        dtTrabPremio.Rows.Clear(); 
-                        dsDados.Tables[0].AsEnumerable().Where(orow =>
-                            (orow.Field<string>("NOTURNO").Trim().ToUpper() == "P")
-                            && (orow.Field<DateTime>("DATA").CompareTo(semana) == 0)
-                            ).CopyToDataTable(dtTrabPremio, LoadOption.OverwriteChanges);
+                    // 2026-05-08: filtro de NOTURNO='P' (aba Premio) removido — descontinuado.
 
-                    }
-                    catch (Exception)
-                    {
-                    }
 
 
 
@@ -1104,11 +1278,15 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             dtTrabCad.TableName = "TABTRABCAD";
             dtTrabMov.TableName = "TABTRABMOV";
             dtTrabNoturno.TableName = "TABTRABNOTURNO";
-            dtTrabPremio.TableName = "TABTRABPREMIO";
 
             dtTrabMovAnt.TableName = "TABTRABMOVANTERIOR";
             //dtTrabMovNotAnt.TableName = "TABTRABNOTURNOANTERIOR";
             PesquisaPontoProvisorio();
+            tProcessing = swTotal.ElapsedMilliseconds - tApi;
+            swTotal.Stop();
+            System.Diagnostics.Debug.WriteLine(
+                "[FiltroTrabMovRapidoNovo] total=" + swTotal.ElapsedMilliseconds +
+                "ms (API=" + tApi + "ms, processing=" + tProcessing + "ms)");
             return result;
         }
 
@@ -1256,19 +1434,7 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                      select g.Key.trab
                      ).ToList();
 
-                List<string> DistinctTrabSemanaPremio =
-
-                    (from gr in dtTrabPremio.AsEnumerable().Where(orow =>
-
-                               (orow.Field<DateTime>("DATA").CompareTo(semana) == 0)
-                    )
-                     group gr by new
-                     {
-                         trab = gr.Field<string>("TRAB")
-                     } into g
-                     select g.Key.trab
-                     ).ToList();
-
+                // 2026-05-08: DistinctTrabSemanaPremio removido (aba Premio descontinuada).
 
                 List<string> DistinctTrabCadastro =
 
@@ -1280,7 +1446,7 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                      select g.Key.trab
                      ).ToList();
 
-                List<string> todosPresentes = DistinctTrabSemanaDiurno.Union(DistinctTrabSemanaNoturno).Union(DistinctTrabSemanaPremio).ToList();
+                List<string> todosPresentes = DistinctTrabSemanaDiurno.Union(DistinctTrabSemanaNoturno).ToList();
                 
                 DataTable cad_Faltando = 
                     CltCadastroCompleto.AsEnumerable().Where(row => 
@@ -1336,5 +1502,58 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             return result;
         }
         #endregion
+
+        /// <summary>
+        /// Busca trabalhador GLOBAL — sem aplicar filtro de SETOR/escopo.
+        /// Usado pelo gerente quando precisa lançar ponto pra trabalhador eventual
+        /// de outra fazenda e ainda não sabe o código (caso "primeiro lançamento").
+        ///
+        /// Retorna SÓ trabalhadores APTOS na semana de referência (mesmo critério
+        /// do <see cref="FiltroTrabMovRapidoNovo"/>): admitido até o fim da semana
+        /// e (sem demissão E sem prazo) OU demitido a partir do início da semana.
+        ///
+        /// O termo é aplicado como LIKE em NOMECAD (case-insensitive) E como
+        /// startsWith em CODCAD. Limita a 100 linhas pra evitar payload absurdo
+        /// se o operador digitar termo curto demais.
+        ///
+        /// Adicionado 2026-05-11.
+        /// </summary>
+        /// <param name="termo">Parte do nome ou código (mínimo 3 caracteres, validado no caller).</param>
+        /// <param name="semana">Quinta-feira de referência da semana de ponto. Define a janela
+        /// de aptidão (admi &lt;= semana+6 e demi &gt;= semana).</param>
+        public static async Task<DataTable> BuscaTrabalhadorGlobal(string termo, DateTime semana)
+        {
+            if (string.IsNullOrWhiteSpace(termo)) return null;
+            string termoSql = termo.Trim().Replace("'", "''");
+            string termoUpper = termoSql.ToUpper();
+
+            // Mesmo critério de aptidão do FiltroTrabMovRapidoNovo:
+            //   admi IS NOT NULL AND admi <= fim_da_semana
+            //   AND ((demi IS NULL AND prazo IS NULL) OR demi >= inicio_da_semana)
+            // Sem filtro de SETOR de propósito — é o ponto inteiro do método.
+            string dataFim = semana.AddDays(6).ToString("yyyy-MM-dd");
+            string semanaIso = semana.ToString("yyyy-MM-dd");
+
+            string query =
+                "SELECT TOP 100 CODCAD, NOMECAD, GLECAD, SETOR, ADMI, DEMI, PRAZO " +
+                "FROM CLTCAD " +
+                "WHERE ( UPPER(NOMECAD) LIKE '%" + termoUpper + "%' " +
+                "        OR CODCAD LIKE '" + termoSql + "%' ) " +
+                "  AND admi IS NOT NULL " +
+                "  AND admi <= '" + dataFim + "' " +
+                "  AND ( (demi IS NULL AND prazo IS NULL) OR demi >= '" + semanaIso + "' ) " +
+                "ORDER BY NOMECAD";
+
+            try
+            {
+                DataSet ds = await ApiServices.Api_QueryMulti(new List<string> { query });
+                if (ds == null || ds.Tables.Count == 0) return null;
+                return ds.Tables[0];
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 }

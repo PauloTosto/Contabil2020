@@ -16,33 +16,64 @@ namespace ApoioContabilidade
     {
         public string path = "";
         public string servidor = "";
-        public FrmWinConfigura()
+
+        /// <summary>
+        /// Quando true, esconde os controles relacionados a CONTAB (caminho DBF
+        /// local) e edita SÓ o SERVIDOR_IP. Usado pelo fluxo pré-login do FrmMenu
+        /// e pelo botão "Configurar caminhos..." do FrmPedirSenha: no contexto de
+        /// autenticação, o CONTAB é irrelevante (USUARIOSMLSA é remoto). Evita
+        /// que operador mexa em config local por engano.
+        /// Adicionado 2026-05-12.
+        /// </summary>
+        private readonly bool soServidor;
+
+        public FrmWinConfigura() : this(false) { }
+
+        public FrmWinConfigura(bool soServidor)
         {
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + "ConfigPath.txt"))
+            this.soServidor = soServidor;
+
+            // B8 fix 2026-05-08: AppPaths.GetConfigPath em vez de concat de enum.
+            if (File.Exists(AppPaths.GetConfigPath("ConfigPath.txt")))
             {
-                ListaCaminhos.Paths = AcessosStream.LeiaLista(Environment.SpecialFolder.LocalApplicationData + "ConfigPath.txt");
+                ListaCaminhos.Paths = AcessosStream.LeiaLista(AppPaths.GetConfigPath("ConfigPath.txt"));
                 path = ListaCaminhos.GetPath("CONTAB");
                 servidor = ListaCaminhos.GetPath("SERVIDOR_IP");
             }
 
-
-
-
             InitializeComponent();
             txPath.Text = path;
             txServidor.Text = servidor;
-            
 
+            if (soServidor)
+            {
+                // Esconde a parte de CONTAB. Move o painel do servidor pro topo
+                // pra não ficar espaço em branco. Ajusta altura do form.
+                Panel1.Visible = false;
+                int yOrigPanel2 = panel2.Top;
+                int deslocamento = yOrigPanel2 - Panel1.Top;
+                panel2.Top = Panel1.Top;
+                BtnOK.Top -= deslocamento;
+                btnCancela.Top -= deslocamento;
+                this.Height -= deslocamento;
+                this.Text = "Configurar servidor";
+            }
         }
         private void BtnOK_Click(object sender, EventArgs e)
         {
-            path = txPath.Text.Trim();
-            if (ListaCaminhos.Paths.ContainsKey("CONTAB"))
-            { ListaCaminhos.Paths["CONTAB"] = path; }
-            else
+            // No modo "só servidor", preserva o CONTAB existente (não toca).
+            // No modo completo, lê do TextBox.
+            if (!soServidor)
             {
-                ListaCaminhos.Paths.Add("CONTAB", path);
+                path = txPath.Text.Trim();
+                if (ListaCaminhos.Paths.ContainsKey("CONTAB"))
+                { ListaCaminhos.Paths["CONTAB"] = path; }
+                else
+                {
+                    ListaCaminhos.Paths.Add("CONTAB", path);
+                }
             }
+
             servidor = txServidor.Text.Trim();
             if (ListaCaminhos.Paths.ContainsKey("SERVIDOR_IP"))
             { ListaCaminhos.Paths["SERVIDOR_IP"] = servidor; }
@@ -50,13 +81,15 @@ namespace ApoioContabilidade
             {
                 ListaCaminhos.Paths.Add("SERVIDOR_IP", servidor);
             }
-            if ((path == "") && (servidor == "")) {
+
+            // Aviso "vazio" só faz sentido no modo completo — no modo só-servidor,
+            // o CONTAB pode estar vazio legitimamente e não é responsabilidade desse fluxo.
+            if (!soServidor && (path == "") && (servidor == ""))
+            {
                 MessageBox.Show("Sem Informação na Configuração Aplicativo não Irá funcionar");
             }
 
-
-            AcessosStream.WriteLista(Environment.SpecialFolder.LocalApplicationData + "ConfigPath.txt", ListaCaminhos.Paths);
-
+            AcessosStream.WriteLista(AppPaths.GetConfigPath("ConfigPath.txt"), ListaCaminhos.Paths);
         }
 
         private void TextBoxPath_Validating(object sender, CancelEventArgs e)

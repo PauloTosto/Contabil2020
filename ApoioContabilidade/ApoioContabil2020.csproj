@@ -207,9 +207,11 @@
     <Compile Include="Contabilidade\FrmTransfereContabilidade.Designer.cs">
       <DependentUpon>FrmTransfereContabilidade.cs</DependentUpon>
     </Compile>
+    <Compile Include="Core\AppPaths.cs" />
     <Compile Include="Core\Combination.cs" />
     <Compile Include="Core\ControleDados.cs" />
     <Compile Include="Core\List_DataTable.cs" />
+    <Compile Include="Core\SessaoAtual.cs" />
     <Compile Include="Core\TestaConexao.cs" />
     <Compile Include="Excel\ExportaLoteExcel.cs" />
     <Compile Include="Excel\ExportaSdoBalanco.cs" />
@@ -416,6 +418,12 @@
     <Compile Include="FrmMenu.Designer.cs">
       <DependentUpon>FrmMenu.cs</DependentUpon>
     </Compile>
+    <Compile Include="FrmPedirSenha.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FrmPedirSenha.Designer.cs">
+      <DependentUpon>FrmPedirSenha.cs</DependentUpon>
+    </Compile>
     <Compile Include="FrmPreparaPlacon1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -504,6 +512,12 @@
     <Compile Include="Trabalho\FormsAuxiliar\FrmPesqFolha.Designer.cs">
       <DependentUpon>FrmPesqFolha.cs</DependentUpon>
     </Compile>
+    <Compile Include="Trabalho\FormsAuxiliar\FrmRetificarProvisorio.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FormsPesquisa\FrmBuscaTrabGlobal.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Trabalho\FormsPesquisa\FrmPesquisaCkList.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -516,11 +530,23 @@
     <Compile Include="Trabalho\FrmCadastro.Designer.cs">
       <DependentUpon>FrmCadastro.cs</DependentUpon>
     </Compile>
+    <Compile Include="Trabalho\FrmCltCodig.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmCltCodig.Designer.cs">
+      <DependentUpon>FrmCltCodig.cs</DependentUpon>
+    </Compile>
     <Compile Include="Trabalho\FrmCltPonto.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Trabalho\FrmCltPonto.Designer.cs">
       <DependentUpon>FrmCltPonto.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Trabalho\FrmServ.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Trabalho\FrmServ.Designer.cs">
+      <DependentUpon>FrmServ.cs</DependentUpon>
     </Compile>
     <Compile Include="Trabalho\FrmConsultaTrab.cs">
       <SubType>Form</SubType>
@@ -543,8 +569,10 @@
       <DependentUpon>FrmEscolhaTrab.cs</DependentUpon>
     </Compile>
     <Compile Include="Trabalho\ServicesTrab\AtualizaFolha.cs" />
+    <Compile Include="Trabalho\ServicesTrab\RegrasMesFechado.cs" />
     <Compile Include="Trabalho\ServicesTrab\ServCltPonto.cs" />
     <Compile Include="Trabalho\ServicesTrab\ServicoFiltroTrab.cs" />
+    <Compile Include="Trabalho\ServicesTrab\ServicoGratificacao.cs" />
     <Compile Include="Trabalho\ServicesTrab\Utilities.cs" />
     <Compile Include="UserControls\ComboBoxMD3.cs">
       <SubType>UserControl</SubType>
@@ -769,6 +797,9 @@
     </Compile>
     <Compile Include="Services\FindDiretorios.cs" />
     <Compile Include="Services\ApiErrorReporter.cs" />
+    <Compile Include="Services\AuditService.cs" />
+    <Compile Include="Services\AutenticacaoService.cs" />
+    <Compile Include="Services\LoginInicial.cs" />
     <Compile Include="Services\ServicosApi.cs" />
     <Compile Include="Services\TabelasIniciais.cs" />
     <Compile Include="TDataControlContab.cs" />

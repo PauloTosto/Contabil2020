@@ -43,9 +43,10 @@ namespace ApoioContabilidade
 
         private void VerificaServidores()
         {
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + "ConfigPath.txt"))
+            // B8 fix 2026-05-08: usar AppPaths.GetConfigPath em vez de concatenar enum (resolvia caminho relativo ao CWD).
+            if (File.Exists(AppPaths.GetConfigPath("ConfigPath.txt")))
             {
-                ListaCaminhos.Paths = AcessosStream.LeiaLista(Environment.SpecialFolder.LocalApplicationData + "ConfigPath.txt");
+                ListaCaminhos.Paths = AcessosStream.LeiaLista(AppPaths.GetConfigPath("ConfigPath.txt"));
             }
 
 
@@ -67,9 +68,9 @@ namespace ApoioContabilidade
 
 
             // carrega os valores para as notas fiscais ( se definido)
-            if (File.Exists(Environment.SpecialFolder.LocalApplicationData + Configura_XML_NF.fileConfigXML))
+            if (File.Exists(AppPaths.GetConfigPath(Configura_XML_NF.fileConfigXML)))
             {
-                Dictionary<string, string> ListaCaminhosXML = AcessosStream.LeiaLista(Environment.SpecialFolder.LocalApplicationData + Configura_XML_NF.fileConfigXML);
+                Dictionary<string, string> ListaCaminhosXML = AcessosStream.LeiaLista(AppPaths.GetConfigPath(Configura_XML_NF.fileConfigXML));
                 Configura_XML_NF.PATHNFE = ListaCaminhosXML["CAMINHOXML"];
                 Configura_XML_NF.cUF_pad = ListaCaminhosXML["CUF"];
                 Configura_XML_NF.CNPJ_pad = ListaCaminhosXML["CNPJ"];
@@ -140,6 +141,53 @@ namespace ApoioContabilidade
             }
             else
             {
+                // 2026-05-12: se há config de SERVIDOR_IP mas servidor está inacessível,
+                // não adianta nem mostrar login (USUARIOSMLSA é remoto). Força reconfig
+                // antes do login. Loop: enquanto inacessível, oferece FrmWinConfigura.
+                // Se usuário cancelar, fecha o app. Modo Contab puro (sem SERVIDOR_IP)
+                // segue sem login.
+                string servidorConfig = ListaCaminhos.GetPath("SERVIDOR_IP");
+                while (!string.IsNullOrEmpty(servidorConfig) && !sucessoServidor)
+                {
+                    var resp = MessageBox.Show(
+                        "Servidor configurado (" + servidorConfig + ") não está acessível.\n\n" +
+                        "Deseja reconfigurar agora?",
+                        "Servidor inacessível", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (resp != DialogResult.Yes)
+                    {
+                        this.Close();
+                        return;
+                    }
+                    // Modo "só servidor" — CONTAB é local e não impede login.
+                    FrmWinConfigura cfg = new FrmWinConfigura(soServidor: true);
+                    cfg.ShowDialog();
+                    cfg.Dispose();
+                    VerificaServidores();
+                    servidorConfig = ListaCaminhos.GetPath("SERVIDOR_IP");
+                }
+
+                // 2026-05-11: login obrigatório quando há servidor (gerentes acessam direto).
+                // Popula SessaoAtual com escopo de setores ANTES de TabelasIniciais.Execute(),
+                // pra que GLEBAS já venha filtrada do servidor. Modo Contab puro (sem servidor)
+                // não pede login — preserva comportamento de fluxos DBF-only.
+                if (sucessoServidor)
+                {
+                    // Callback pro botão "Configurar caminhos..." dentro do login.
+                    // Re-roda VerificaServidores e devolve se servidor agora está OK.
+                    Func<bool> reverifica = () =>
+                    {
+                        VerificaServidores();
+                        return sucessoServidor;
+                    };
+                    bool autenticou = await LoginInicial.ExecutarAsync(this, reverifica);
+                    if (!autenticou)
+                    {
+                        MessageBox.Show("Autenticação cancelada ou falhou. Aplicação será encerrada.",
+                            "Login", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.Close();
+                        return;
+                    }
+                }
 
                 contabilidadeToolStripMenuItem.Visible = sucesso;
                 apiFinanceiroMenuItem.Visible = sucessoServidor;
@@ -149,7 +197,53 @@ namespace ApoioContabilidade
                 produçãoToolStripMenuItem.Visible = sucessoServidor;
 
                 atualizouTabelas = await TabelasIniciais.Execute();
+
+                // 2026-05-11: perfil gerente. Quando o usuário tem escopo restrito
+                // (>=1 setor em USUARIO_SETORES), esconde menus administrativos.
+                // Convenção: presença = gerente, ausência = escritório (vê tudo).
+                if (SessaoAtual.TemEscopoRestrito)
+                {
+                    AplicaPerfilGerente();
+                }
+
+                // Mostra na barra do título quem está logado e o escopo (ajuda a depurar
+                // "estou vendo dado de qual fazenda?").
+                if (!string.IsNullOrEmpty(SessaoAtual.Usuario))
+                {
+                    string escopo = SessaoAtual.TemEscopoRestrito
+                        ? " — Setores: " + string.Join(",", SessaoAtual.Setores)
+                        : " — (sem restrição)";
+                    this.Text = this.Text + "  [" + SessaoAtual.Usuario + escopo + "]";
+                }
             }
+        }
+
+        /// <summary>
+        /// Esconde menus que não fazem sentido pro perfil gerente. Chamado por
+        /// FrmMenu_Load quando SessaoAtual.TemEscopoRestrito = true.
+        ///
+        /// Defesa em camadas: além de esconder na UI, qualquer endpoint sensível
+        /// no servidor deve revalidar (ainda dependente da migração pra ApiMLSAv2).
+        /// Por hora, esconder reduz a superfície e evita confusão do operador.
+        ///
+        /// Adicionado 2026-05-11.
+        /// </summary>
+        private void AplicaPerfilGerente()
+        {
+            // Menus de raiz invisíveis pra gerente.
+            pagarEReceberToolStripMenuItem.Visible = false;
+            contabilidadeToolStripMenuItem.Visible = false;
+            apiFinanceiroMenuItem.Visible = false;
+            transferenciasContabilidadeToolStripMenuItem.Visible = false;
+            toolStripFiscais.Visible = false;
+            produçãoToolStripMenuItem.Visible = false;
+
+            // Dentro de Trabalho, mantém só o que faz sentido pro dia-a-dia do gerente.
+            // Visíveis: Cadastro (ver dados dos seus trabalhadores), Lançamentos Ponto.
+            cltCodigoToolStripMenuItem.Visible = false;        // edição de códigos = admin
+            testeToolStripMenuItem.Visible = false;            // debug interno
+            relatórioToolStripMenuItem.Visible = false;        // a revisar caso a caso
+            pontoMensalRelatórioToolStripMenuItem.Visible = false;
         }
 
         private void preparaPlaconToolStripMenuItem_Click(object sender, EventArgs e)
@@ -236,6 +330,13 @@ namespace ApoioContabilidade
         {
             FrmConsultaTrab ocltPonto = new FrmConsultaTrab();
             ocltPonto.Show();
+        }
+
+        // Adicionado 2026-05-08 (F7): cadastro de códigos de apontamento (CLTCODIG).
+        private void cltCodigoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FrmCltCodig form = new FrmCltCodig();
+            form.Show();
         }
 
         private void testeToolStripMenuItem_Click(object sender, EventArgs e)

@@ -40,7 +40,10 @@ namespace ApoioContabilidade.Trabalho
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.tsDelete = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            // 2026-05-08: tsServico restaurado (botão "Serviços") — abre FrmServ filtrado pelo NUM_MOD da row corrente.
             this.tsServico = new System.Windows.Forms.ToolStripButton();
+            // 2026-05-12: tsRetificar — abre FrmRetificarProvisorio quando linha tem CODSER=943.
+            this.tsRetificar = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.tsConsulta = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
@@ -48,8 +51,6 @@ namespace ApoioContabilidade.Trabalho
             this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             this.tsColar = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
-            this.tsCodigo = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.tsFiltro = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
             this.tsLabelSemana = new System.Windows.Forms.ToolStripLabel();
@@ -81,8 +82,7 @@ namespace ApoioContabilidade.Trabalho
             this.label1 = new System.Windows.Forms.Label();
             this.txSetores = new System.Windows.Forms.TextBox();
             this.txTrabalhador = new System.Windows.Forms.TextBox();
-            this.tpPremio = new System.Windows.Forms.TabPage();
-            this.dgvPremio = new System.Windows.Forms.DataGridView();
+            // 2026-05-08: aba Premio removida (feature April 2021 nunca usada — 0 registros com NOTURNO='P')
             this.pnTop.SuspendLayout();
             this.toolMenu.SuspendLayout();
             this.pnCltponto.SuspendLayout();
@@ -98,8 +98,6 @@ namespace ApoioContabilidade.Trabalho
             ((System.ComponentModel.ISupportInitialize)(this.dgvTrabalhadores)).BeginInit();
             this.pnFiltro.SuspendLayout();
             this.groupBox1.SuspendLayout();
-            this.tpPremio.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvPremio)).BeginInit();
             this.SuspendLayout();
             // 
             // pnTop
@@ -124,6 +122,7 @@ namespace ApoioContabilidade.Trabalho
             this.tsDelete,
             this.toolStripSeparator4,
             this.tsServico,
+            this.tsRetificar,
             this.toolStripSeparator5,
             this.tsConsulta,
             this.toolStripSeparator6,
@@ -131,8 +130,6 @@ namespace ApoioContabilidade.Trabalho
             this.toolStripSeparator7,
             this.tsColar,
             this.toolStripSeparator8,
-            this.tsCodigo,
-            this.toolStripSeparator9,
             this.tsFiltro,
             this.toolStripSeparator10,
             this.tsLabelSemana,
@@ -199,25 +196,32 @@ namespace ApoioContabilidade.Trabalho
             this.tsDelete.Click += new System.EventHandler(this.tsDelete_Click);
             // 
             // toolStripSeparator4
-            // 
+            //
             this.toolStripSeparator4.Name = "toolStripSeparator4";
             this.toolStripSeparator4.Size = new System.Drawing.Size(6, 27);
-            // 
+            //
             // tsServico
-            // 
+            //
             this.tsServico.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsServico.Enabled = false;
-            this.tsServico.Image = ((System.Drawing.Image)(resources.GetObject("tsServico.Image")));
-            this.tsServico.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tsServico.Name = "tsServico";
-            this.tsServico.Size = new System.Drawing.Size(67, 24);
             this.tsServico.Text = "Se&rviços";
-            // 
+            this.tsServico.Click += new System.EventHandler(this.tsServico_Click);
+            //
+            // tsRetificar (2026-05-12)
+            //
+            this.tsRetificar.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.tsRetificar.Name = "tsRetificar";
+            this.tsRetificar.Text = "Retificar &provisório";
+            this.tsRetificar.ToolTipText = "Trocar CODSER=943 (provisório) pelo serviço real, com validação de gratificação.";
+            this.tsRetificar.BackColor = System.Drawing.Color.LightGoldenrodYellow;
+            this.tsRetificar.Visible = false;  // visibilidade controlada por evento de seleção
+            this.tsRetificar.Click += new System.EventHandler(this.tsRetificar_Click);
+            //
             // toolStripSeparator5
-            // 
+            //
             this.toolStripSeparator5.Name = "toolStripSeparator5";
             this.toolStripSeparator5.Size = new System.Drawing.Size(6, 27);
-            // 
+            //
             // tsConsulta
             // 
             this.tsConsulta.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
@@ -262,22 +266,7 @@ namespace ApoioContabilidade.Trabalho
             // 
             this.toolStripSeparator8.Name = "toolStripSeparator8";
             this.toolStripSeparator8.Size = new System.Drawing.Size(6, 27);
-            // 
-            // tsCodigo
-            // 
-            this.tsCodigo.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.tsCodigo.Enabled = false;
-            this.tsCodigo.Image = ((System.Drawing.Image)(resources.GetObject("tsCodigo.Image")));
-            this.tsCodigo.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tsCodigo.Name = "tsCodigo";
-            this.tsCodigo.Size = new System.Drawing.Size(68, 24);
-            this.tsCodigo.Text = "Códigos";
-            // 
-            // toolStripSeparator9
-            // 
-            this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(6, 27);
-            // 
+            //
             // tsFiltro
             // 
             this.tsFiltro.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
@@ -329,7 +318,6 @@ namespace ApoioContabilidade.Trabalho
             this.tcCltPonto.Controls.Add(this.tpDiaristas);
             this.tcCltPonto.Controls.Add(this.tpNoturno);
             this.tcCltPonto.Controls.Add(this.tpSemanaAnt);
-            this.tcCltPonto.Controls.Add(this.tpPremio);
             this.tcCltPonto.Location = new System.Drawing.Point(41, 5);
             this.tcCltPonto.Name = "tcCltPonto";
             this.tcCltPonto.SelectedIndex = 0;
@@ -605,29 +593,7 @@ namespace ApoioContabilidade.Trabalho
             this.txTrabalhador.Size = new System.Drawing.Size(264, 22);
             this.txTrabalhador.TabIndex = 4;
             this.txTrabalhador.TextChanged += new System.EventHandler(this.txTrabalhador_TextChanged);
-            // 
-            // tpPremio
-            // 
-            this.tpPremio.Controls.Add(this.dgvPremio);
-            this.tpPremio.Location = new System.Drawing.Point(4, 25);
-            this.tpPremio.Name = "tpPremio";
-            this.tpPremio.Size = new System.Drawing.Size(1402, 379);
-            this.tpPremio.TabIndex = 3;
-            this.tpPremio.Text = "4 - Premio";
-            this.tpPremio.UseVisualStyleBackColor = true;
-            // 
-            // dgvPremio
-            // 
-            this.dgvPremio.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvPremio.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvPremio.Location = new System.Drawing.Point(11, 13);
-            this.dgvPremio.Name = "dgvPremio";
-            this.dgvPremio.RowHeadersWidth = 51;
-            this.dgvPremio.RowTemplate.Height = 24;
-            this.dgvPremio.Size = new System.Drawing.Size(1381, 352);
-            this.dgvPremio.TabIndex = 2;
-            // 
+            //
             // FrmCltPonto
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -660,8 +626,6 @@ namespace ApoioContabilidade.Trabalho
             this.pnFiltro.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
-            this.tpPremio.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvPremio)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -691,6 +655,7 @@ namespace ApoioContabilidade.Trabalho
         private System.Windows.Forms.ToolStripButton tsDelete;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
         private System.Windows.Forms.ToolStripButton tsServico;
+        private System.Windows.Forms.ToolStripButton tsRetificar;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
         private System.Windows.Forms.ToolStripButton tsConsulta;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
@@ -698,8 +663,6 @@ namespace ApoioContabilidade.Trabalho
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
         private System.Windows.Forms.ToolStripButton tsColar;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator8;
-        private System.Windows.Forms.ToolStripButton tsCodigo;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
         public System.Windows.Forms.ToolStripLabel tsLabelSemana;
         private System.Windows.Forms.Panel pnFiltro;
         private System.Windows.Forms.TextBox txSetores;
@@ -719,7 +682,5 @@ namespace ApoioContabilidade.Trabalho
         private System.Windows.Forms.RadioButton rbTodos;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripButton tsTrabAnterior;
-        private System.Windows.Forms.TabPage tpPremio;
-        private System.Windows.Forms.DataGridView dgvPremio;
     }
 }

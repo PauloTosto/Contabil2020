@@ -40,6 +40,7 @@ namespace ApoioContabilidade.Trabalho
             this.dtData1 = new System.Windows.Forms.DateTimePicker();
             this.btnSair = new System.Windows.Forms.Button();
             this.btnConsulta = new System.Windows.Forms.Button();
+            this.btnBuscaGlobal = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.txAdministrador = new System.Windows.Forms.TextBox();
             this.pnTop.SuspendLayout();
@@ -56,6 +57,7 @@ namespace ApoioContabilidade.Trabalho
             this.pnTop.Controls.Add(this.dtData1);
             this.pnTop.Controls.Add(this.btnSair);
             this.pnTop.Controls.Add(this.btnConsulta);
+            this.pnTop.Controls.Add(this.btnBuscaGlobal);
             this.pnTop.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnTop.Location = new System.Drawing.Point(0, 0);
             this.pnTop.Name = "pnTop";
@@ -137,7 +139,18 @@ namespace ApoioContabilidade.Trabalho
             this.btnConsulta.Text = "C&onsulta";
             this.btnConsulta.UseVisualStyleBackColor = true;
             this.btnConsulta.Click += new System.EventHandler(this.btnConsulta_Click);
-            // 
+            //
+            // btnBuscaGlobal
+            //
+            this.btnBuscaGlobal.Location = new System.Drawing.Point(140, 130);
+            this.btnBuscaGlobal.Margin = new System.Windows.Forms.Padding(4);
+            this.btnBuscaGlobal.Name = "btnBuscaGlobal";
+            this.btnBuscaGlobal.Size = new System.Drawing.Size(280, 32);
+            this.btnBuscaGlobal.TabIndex = 8;
+            this.btnBuscaGlobal.Text = "Buscar trabalhador (qualquer fazenda)...";
+            this.btnBuscaGlobal.UseVisualStyleBackColor = true;
+            this.btnBuscaGlobal.Click += new System.EventHandler(this.btnBuscaGlobal_Click);
+            //
             // label2
             // 
             this.label2.AutoSize = true;
@@ -178,6 +191,7 @@ namespace ApoioContabilidade.Trabalho
         private System.Windows.Forms.Panel pnTop;
         private System.Windows.Forms.Button btnSair;
         private System.Windows.Forms.Button btnConsulta;
+        private System.Windows.Forms.Button btnBuscaGlobal;
         public Pesquise oPesquisa;
         
         public System.Windows.Forms.DateTimePicker dtData1;

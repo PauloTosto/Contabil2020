@@ -7,7 +7,24 @@ using System.Drawing;
 using System.Data;
 namespace ApoioContabilidade
 {
-   
+    /// <summary>
+    /// Versão LEGADA de ArmeEdicao, divergiu da versão em ClassFiltroEdite.ArmeEdicao
+    /// (a "nova", com BindingNavigator + Novo/Delete/Sair + IncluiAutomatico, etc.).
+    ///
+    /// Esta cópia local existe por razão histórica — o projeto ApoioContabilidade
+    /// fez uma fork antes da evolução da DLL ClassFiltroEdite. Hoje ambas
+    /// coexistem: 21 forms instanciam <c>ArmeEdicao</c> sem qualificador, e por
+    /// resolução de namespace ancestral a versão LOCAL ganha (mesmo havendo
+    /// <c>using ClassFiltroEdite</c>).
+    ///
+    /// Plano de saída (R3): migrar form a form pra <c>ClassFiltroEdite.ArmeEdicao</c>,
+    /// um por rodada com teste funcional. Quando o último migrar, deletar este arquivo.
+    ///
+    /// Marcado [Obsolete] em 2026-05-11 pra que warnings do compilador apontem
+    /// novos usos eventuais. Os 21 usos existentes geram warning intencional —
+    /// inventário de pendências.
+    /// </summary>
+    [Obsolete("Use ClassFiltroEdite.ArmeEdicao (versão evoluída). Esta cópia local será removida quando os 21 forms existentes migrarem. Ver R3 no backlog.")]
     public class ArmeEdicao : Control
     {
         public List<Linha> Linhas;
