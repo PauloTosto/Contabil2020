@@ -64,18 +64,23 @@ namespace ApoioContabilidade.PagarReceber
                         mov_id2 = Convert.ToDouble(odataset.Tables[0].Rows[0][0]);
                      }
                      catch (Exception) { }
-                     if (mov_id2 != -1) 
+                     if (mov_id2 == -1)
                      {
-                        mov_id2++;
-                        //if (mov_id2 != mov_id)
-                        //{
-                        orow["MOV_ID"] = mov_id2;
-                        Mestre_PositionChanged(bmMestre, null);
+                        // sem MOV_ID válido não pode gravar: o registro iria pro servidor com MOV_ID=-1
+                        // e os detalhes herdariam OUTRO_ID=-1 (colisão entre títulos)
+                        MessageBox.Show("Erro ao buscar numero exclusivo");
+                        e.Cancela = true;
+                        return;
+                     }
+                     mov_id2++;
+                     //if (mov_id2 != mov_id)
+                     //{
+                     orow["MOV_ID"] = mov_id2;
+                     Mestre_PositionChanged(bmMestre, null);
 
-                        //}
-                    }
+                     //}
 
-                    
+
                 }
                 string conta; 
                 if (tipoConta == 1) // pagar
@@ -117,30 +122,6 @@ namespace ApoioContabilidade.PagarReceber
                 // int position = (bmDetalhe1.DataSource as DataView).
 
                 string fornecedor = TabelasIniciais.Ache_Descricao(orow["EMISSOR"].ToString());
-                foreach (DataRowView orowdet in (bmDetalhe1.DataSource as DataView))
-                {
-                    orowdet.Row.BeginEdit();
-                    if (tipoConta == 1)
-                        orowdet.Row["DEBITO"] = orow["CREDITO"];
-                    else orowdet.Row["CREDITO"] = orow["DEBITO"];
-                    orowdet.Row["DOC_FISC"] = orow["DOC_FISC"];
-                    orowdet.Row["DATA_EMI"] = orow["DATA_EMI"];
-                    if (orowdet.Row["EMISSOR"].ToString() != orow["EMISSOR"].ToString())
-                    {
-                        if (fornecedor.Length != 0)
-                        {
-                            if (fornecedor.Length > 35)
-                                orowdet.Row["FORN"] = fornecedor.Substring(0, 35);
-                            else orowdet.Row["FORN"] = fornecedor;
-                        }
-                        else
-                            orowdet.Row["FORN"] = "";
-                    }
-                    orowdet.Row["EMISSOR"] = orow["EMISSOR"];
-                    ok = await Prepara_Sql.OpereRegistroServidorAsync(orowdet.Row, DataRowState.Modified, "MOV_FIN");
-                    orowdet.Row.EndEdit();
-                }
-                dsFiltrado.Tables["MOV_FIN"].AcceptChanges();
                 if (bmDetalhe1.Count > 0)
                 {
                     //bmDetalhe1.SuspendBinding();
