@@ -178,6 +178,24 @@ namespace ApoioContabilidade.Services
                         dsTabelasIniciais.Tables[i].AcceptChanges();
                     }
                 }
+                // Registry de tipos (PROD_TIPO) — carregado A PARTE e TOLERANTE. Query GUARDADA por
+                // OBJECT_ID: se a producao ainda nao tem a tabela, nao retorna result-set (sem erro) e
+                // o combo de tipo (TipoProdCombo) cai no fallback {0,1,11,21}. So habilita TIPO1 e tipos
+                // novos quando o registry estiver no servidor (apos o go-live da extensibilidade).
+                try
+                {
+                    DataSet dsReg = await ApiServices.Api_QueryMulti(
+                        new List<string> { "IF OBJECT_ID('PROD_TIPO') IS NOT NULL SELECT * FROM PROD_TIPO" });
+                    if (dsReg != null && dsReg.Tables.Count > 0 && dsReg.Tables[0].Columns.Count > 0)
+                    {
+                        DataTable treg = dsReg.Tables[0].Copy();
+                        treg.TableName = "PROD_TIPO";
+                        treg.AcceptChanges();
+                        if (dsTabelasIniciais.Tables.Contains("PROD_TIPO")) dsTabelasIniciais.Tables.Remove("PROD_TIPO");
+                        dsTabelasIniciais.Tables.Add(treg);
+                    }
+                }
+                catch (Exception) { /* servidor sem PROD_TIPO -> combo cai no fallback */ }
                 inprocess = false;
             }
             catch (Exception E)
@@ -1458,11 +1476,22 @@ end;
                 TipoProdCombo = new DataTable();
                 TipoProdCombo.Columns.Add("PROD_TP", Type.GetType("System.Int32"));
                 TipoProdCombo.Columns.Add("DESCRICAO", Type.GetType("System.String"));
-                List<Int32> incluido = new List<int>();
-                incluido.Add(0);
-                incluido.Add(11);
-                incluido.Add(1);
-                incluido.Add(21);
+                // REGISTRY-DRIVEN: base legada {0,1,11,21} (nao regride) + tipos de LOTE ATIVOS do
+                // registry PROD_TIPO (incl. TIPO1=31 e futuros). Sem PROD_TIPO -> so a base legada.
+                List<Int32> incluido = new List<int> { 0, 1, 11, 21 };
+                if (odataset.Tables.Contains("PROD_TIPO"))
+                {
+                    DataTable preg = odataset.Tables["PROD_TIPO"];
+                    if (preg.Columns.Contains("EH_TIPO_LOTE") && preg.Columns.Contains("ATIVO"))
+                        foreach (DataRow pr in preg.Rows)
+                        {
+                            if (pr.IsNull("COD")) continue;
+                            bool ehLote = (!pr.IsNull("EH_TIPO_LOTE")) && Convert.ToInt32(pr["EH_TIPO_LOTE"]) != 0;
+                            bool ativo = (!pr.IsNull("ATIVO")) && Convert.ToInt32(pr["ATIVO"]) != 0;
+                            int cod = Convert.ToInt32(pr["COD"]);
+                            if (ehLote && ativo && !incluido.Contains(cod)) incluido.Add(cod);
+                        }
+                }
                 foreach (DataRow row in odataset.Tables["TIPOPROD"].Rows)
                 {
                     if (!incluido.Contains(Convert.ToInt32(row["COD"]))) continue;

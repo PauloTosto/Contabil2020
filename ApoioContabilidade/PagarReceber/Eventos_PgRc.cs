@@ -1253,8 +1253,18 @@ namespace ApoioContabilidade.PagarReceber
                           ultimocontrato }));
                     double outro_id = Convert.ToDouble(odataset.Tables[0].Rows[0][0]);
                     double vendas_id = Convert.ToDouble(odataset.Tables[0].Rows[0][1]);
-                    orow["OUTRO_ID"] = outro_id;
-                    orow["VENDAS_ID"] = vendas_id;
+                    // VENDAS_ID/OUTRO_ID = proximo id UNICO (MAX+1) e SO na inclusao.
+                    // BUG ANTIGO (corrigido 2026-06-17): gravava o MAX sem +1 -> cada venda nova
+                    // herdava o VENDAS_ID do ultimo contrato (duplicava), quebrando o rastreamento
+                    // (LOT_VENDA casa por VENDAS_ID). E rodava tb em Modified, reatribuindo o id de
+                    // vendas existentes. Convencao mantida: OUTRO_ID == VENDAS_ID. (single-user: MAX+1
+                    // sem transacao e o padrao do app; risco de corrida pre-existente.)
+                    if (e.TipoMuda == DataRowState.Added)
+                    {
+                        double novo_id = Math.Max(outro_id, vendas_id) + 1;
+                        orow["OUTRO_ID"] = novo_id;
+                        orow["VENDAS_ID"] = novo_id;
+                    }
                     if (orow["CONT"].ToString().Trim() == "")
                     {
                         string cont = "  1";
