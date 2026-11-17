@@ -429,42 +429,37 @@ namespace ClassLibTrabalho
                 return valor;
             }
         }
+        // EC 141/2026: divisor data-aware via TDataControlTrabalho.DivisorHE(fim).
+        //   até 14/12/2026: 220  |  15/12/2026+: 210  |  15/12/2027+: 200
         private Decimal domingo_hextra(Decimal thoras, Decimal tsal)
         {
             if (thoras == 0.0M)
                 return 0.0M;
-            else
+            Decimal div = TDataControlTrabalho.DivisorHE(fim);
+            if (fim < new DateTime(2011, 12, 1))
             {
-                if (fim < new DateTime(2011, 12, 1))
-                {
-                    return TDataControlTrabalho.ptRound((thoras * (tsal / 240.0M)), 2);
-                }
-                else
-                {
-                    return TDataControlTrabalho.ptRound((thoras * ((tsal / 220.0M) * 2.0M)), 2);
-                }
+                return TDataControlTrabalho.ptRound((thoras * (tsal / div)), 2);
             }
+            return TDataControlTrabalho.ptRound((thoras * ((tsal / div) * 2.0M)), 2);
         }
         private Decimal normal_hextra(Decimal thoras, Decimal tsal)
         {
             if (thoras == 0.0M)
                 return 0.0M;
-            else
-                return TDataControlTrabalho.ptRound((thoras * ((tsal / 220.0M) * 1.5M)), 2);
+            Decimal div = TDataControlTrabalho.DivisorHE(fim);
+            return TDataControlTrabalho.ptRound((thoras * ((tsal / div) * 1.5M)), 2);
         }
-        // alterar a partir de agosto o calculo da noturno 
+        // alterar a partir de agosto o calculo da noturno
         private Decimal noturno_hextra(Decimal thoras, Decimal tsal)
         {
             if (thoras == 0.0M)
                 return 0.0M;
-            else
-                if (fim < new DateTime(2011, 12, 1))
-                {
-
-                    return TDataControlTrabalho.ptRound((thoras * ((tsal / 220.0M) * 2.25M)), 2);
-                }
-                else
-                    return 0.0M;
+            if (fim < new DateTime(2011, 12, 1))
+            {
+                Decimal div = TDataControlTrabalho.DivisorHE(fim);
+                return TDataControlTrabalho.ptRound((thoras * ((tsal / div) * 2.25M)), 2);
+            }
+            return 0.0M;
         }
 
        

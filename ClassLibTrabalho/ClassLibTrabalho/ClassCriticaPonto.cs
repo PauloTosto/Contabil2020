@@ -237,6 +237,13 @@ namespace ClassLibTrabalho
                     assoc.fi_anterior = true;
                 if (orowponto["DIA4"].ToString().Trim() == "X")
                     assoc.domingotrab_anterior = true;
+                // EC 141/2026: sábado (DIA3) da semana anterior também é DSR a partir de 15/12/2026.
+                if (orowponto["DIA3"].ToString().Trim() == "X")
+                {
+                    DateTime dtSabadoAnt = Convert.ToDateTime(orowponto["DATA"]).AddDays(2);
+                    if (TDataControlTrabalho.SegundoDSRAtivo(dtSabadoAnt))
+                        assoc.domingotrab_anterior = true;
+                }
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -320,17 +327,29 @@ namespace ClassLibTrabalho
                         {
                             assoc.compativel[i - 1] = ocod.compati;
                         }
+                        // EC 141/2026: em 5x2, sábado (DIA3) é DSR e deixa de contar como falta útil.
+                        bool sabadoEhDSR = false;
+                        if (!orow.IsNull("DATA"))
+                        {
+                            DateTime dtSabado = Convert.ToDateTime(orow["DATA"]).AddDays(2);
+                            sabadoEhDSR = TDataControlTrabalho.SegundoDSRAtivo(dtSabado);
+                        }
                         if (ocod.indcod == "FI")
                         {
-                            if ((dias == "DIA1") || (dias == "DIA2") || (dias == "DIA3") )
+                            if (sabadoEhDSR && dias == "DIA3")
+                            {
+                                // sábado agora é DSR; não conta como falta útil
+                            }
+                            else if ((dias == "DIA1") || (dias == "DIA2") || (dias == "DIA3") )
                                 assoc.fi_1_2_3 += 1;
-                            if ((dias == "DIA5") || (dias == "DIA6") || (dias == "DIA7"))
+                            else if ((dias == "DIA5") || (dias == "DIA6") || (dias == "DIA7"))
                                 assoc.fi_5_6_7 += 1;
                         }
-                        if ((dias == "DIA4") && (ocod.indcod.Trim() == "R"))
+                        bool ehDSR = (dias == "DIA4") || (sabadoEhDSR && dias == "DIA3");
+                        if (ehDSR && (ocod.indcod.Trim() == "R"))
                             assoc.remun = true;
-                        if ((dias == "DIA4") && (ocod.indcod.Trim() == "X"))
-                            assoc.domingo_trab = true;
+                        if (ehDSR && (ocod.indcod.Trim() == "X"))
+                            assoc.domingo_trab = true;   // nome legacy: "trabalhou em DSR"
                     }
                 }
             }

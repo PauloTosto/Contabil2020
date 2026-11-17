@@ -1304,10 +1304,36 @@ namespace ClassLibTrabalho
 
 
        
+        // =====================================================================
+        // EC 141/2026 — helpers data-aware.
+        // Espelham dbo.fn_DivisorHorasExtras e dbo.fn_SegundoDSRAtivo no SQL,
+        // e DivisorHE / SegundoDSRAtivo em Funcoes.pas (Delphi).
+        // Manter as três cópias sincronizadas: mesmas datas, mesmos valores.
+        // =====================================================================
+
+        // Divisor mensalista para hora extra.
+        //   fim < 01/12/2011  -> 240 (ramo pré-2011, preservado)
+        //   fim < 15/12/2026  -> 220 (44h/sem)
+        //   fim < 15/12/2027  -> 210 (42h/sem, 5x2 fase 1)
+        //   fim >= 15/12/2027 -> 200 (40h/sem, regime final)
+        static public decimal DivisorHE(DateTime fim)
+        {
+            if (fim < new DateTime(2011, 12, 1)) return 240.0M;
+            if (fim < new DateTime(2026, 12, 15)) return 220.0M;
+            if (fim < new DateTime(2027, 12, 15)) return 210.0M;
+            return 200.0M;
+        }
+
+        // Sábado passa a ser 2º DSR a partir de 15/12/2026.
+        static public bool SegundoDSRAtivo(DateTime fim)
+        {
+            return fim >= new DateTime(2026, 12, 15);
+        }
+
         static public decimal CalcSalarioMinimo(DateTime data, DataTable SalarioMinimo)
         {
             Decimal result = 0.0M;
-            
+
             DateTime ofimdomes = TDataControlReduzido.UltimoDiaMes(data);
             DataRow [] orow = SalarioMinimo.Select("DATA <= '" + ofimdomes.ToString("d") + "'", "DATA DESC");
             if ((orow.Length > 0) && (Convert.ToDecimal(orow[0]["VALOR"]) != 0.0M))

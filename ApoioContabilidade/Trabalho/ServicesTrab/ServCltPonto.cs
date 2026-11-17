@@ -1,4 +1,5 @@
 ﻿using ApoioContabilidade.Trabalho.Models;
+using ClassLibTrabalho;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -71,9 +72,14 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                            ocod.Horas50;
                             dataRowlst[horas] = Convert.ToDouble(dataRowlst[horas]) + ocod.Horas50;
                         }
+                        // EC 141/2026: sábado (DIA3) passa a ser 2º DSR a partir de 15/12/2026.
+                        // Data efetiva deste DIA: DataSemana + (i-1) (semana começa quinta).
+                        bool ehDSR_5x2 = (i == 3)
+                            && TDataControlTrabalho.SegundoDSRAtivo(DataSemana.AddDays(i - 1));
+                        bool ehDSR = (i == 4) || ehDSR_5x2;
                         if (ocod.HorasFe > 0)
                         {
-                            if (i == 4)
+                            if (ehDSR)
                             {
                                 dataRowlst["HORAS100"] = Convert.ToDouble(dataRowlst["HORAS100"]) +
                                              ocod.HorasFe;
@@ -90,20 +96,26 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                         }
                         if (ocod.IndCod == "FI")
                         {
-                            if ((campo == "DIA1") || (campo == "DIA2") || (campo == "DIA3"))
+                            // Em 5x2, FI em DIA3 (sábado) deixa de ser falta útil — é DSR.
+                            if (ehDSR_5x2)
+                            {
+                                // sábado agora é DSR; não conta como falta nem em 1-2-3 nem em 5-6-7
+                            }
+                            else if ((campo == "DIA1") || (campo == "DIA2") || (campo == "DIA3"))
                             {
                                 dataRowlst["FI_1_2_3"] = Convert.ToInt16(dataRowlst["FI_1_2_3"]) + 1;
                             }
                             else
                                 dataRowlst["FI_5_6_7"] = Convert.ToInt16(dataRowlst["FI_5_6_7"]) + 1;
                         }
-                        if ((campo == "DIA4") && (ocod.IndCod.Trim() == "R"))
+                        // EC 141/2026: espelhar REMUN/DOMINGO_TRAB para DIA3 quando sábado é DSR.
+                        if (ehDSR && (ocod.IndCod.Trim() == "R"))
                         {
                             dataRowlst["REMUN"] = true;
                         }
-                        if ((campo == "DIA4") && (ocod.IndCod.Trim() == "X"))
+                        if (ehDSR && (ocod.IndCod.Trim() == "X"))
                         {
-                            dataRowlst["DOMINGO_TRAB"] = true;
+                            dataRowlst["DOMINGO_TRAB"] = true;   // nome legacy: significa "trabalhou em DSR"
                         }
                     }
                     else
@@ -147,6 +159,13 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             {
                 dataRowlst["DOMINGOTRAB_ANTERIOR"] = true;
 
+            }
+            // EC 141/2026: sábado anterior (DIA3) também é DSR quando a data desse sábado for >= 15/12/2026.
+            // DOMINGOTRAB_ANTERIOR passa a significar "qualquer DSR da semana anterior trabalhado".
+            if (orow["DIA3"].ToString().Trim() == "X"
+                && TDataControlTrabalho.SegundoDSRAtivo(DataSemana.AddDays(-7 + 2)))
+            {
+                dataRowlst["DOMINGOTRAB_ANTERIOR"] = true;
             }
 
 
@@ -331,21 +350,28 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                             orow["CRITICA"] = "Remunerado Indevido";
                         }
                     }
-                    // sabado DIA3
-                    string dia3 = "DIA3";
-                    string dia_fe3 = "DIA_FE3";
-                    if ((Math.Round(Convert.ToDouble(dataRowlst[dia3]),3) < 4)
-                         && (Math.Round(Convert.ToDouble(dataRowlst[dia_fe3]),3) < 8)
-                        && (!(Convert.ToDateTime(dataRowlst["ADMI"]).CompareTo(DataSemana.AddDays((3 - 1))) > 0)))
+                    // sabado DIA3 (meio-expediente) — só vale no regime 6x1.
+                    // Em 5x2 (EC 141/2026) sábado é DSR, não meio-expediente.
+                    if (!TDataControlTrabalho.SegundoDSRAtivo(DataSemana.AddDays(3 - 1)))
                     {
-                        orow["CRITICA"] = "Remunerado Indevido";
+                        string dia3 = "DIA3";
+                        string dia_fe3 = "DIA_FE3";
+                        if ((Math.Round(Convert.ToDouble(dataRowlst[dia3]),3) < 4)
+                             && (Math.Round(Convert.ToDouble(dataRowlst[dia_fe3]),3) < 8)
+                            && (!(Convert.ToDateTime(dataRowlst["ADMI"]).CompareTo(DataSemana.AddDays((3 - 1))) > 0)))
+                        {
+                            orow["CRITICA"] = "Remunerado Indevido";
+                        }
                     }
                 }
 
+                // EC 141/2026: em 5x2, sábado (DIA3) passa a se comportar como domingo (DIA4) p/ excedentes.
+                bool sabadoEhDSR = TDataControlTrabalho.SegundoDSRAtivo(DataSemana.AddDays(3 - 1));
                 for (int i = 1; i <= 7; i++)
                 {
                     string dia = "DIA" + i.ToString();
-                    if (i != 4)
+                    bool ehDSR = (i == 4) || (i == 3 && sabadoEhDSR);
+                    if (!ehDSR)
                     {
                         if (Math.Round(Convert.ToDouble(dataRowlst[dia]),3) > 8)
                             orow["CRITICA"] = "Horas Normais Excedentes ";
@@ -368,12 +394,13 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
                 {
                     string dia = "DIA" + i.ToString();
                     string horas = "HORAS" + i.ToString();
-                    if (i == 3) // sabado
+                    // Sábado meio-expediente é regra do 6x1; em 5x2 sábado é DSR e cai no else.
+                    if (i == 3 && !sabadoEhDSR)
                     {
                         if ((Convert.ToDouble(dataRowlst[horas]) > 0)
                              && (Math.Round(Convert.ToDouble(dataRowlst[dia]),3) < (8 / 2)))
                             orow["CRITICA"] = "Dia Incompl. + Extra? ";
-                        
+
                          if (Math.Round(Convert.ToDouble(dataRowlst[dia]),3) > 8 )
                             orow["CRITICA"] = "Horas Normais Excedentes (sabado)";
                     }
