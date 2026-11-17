@@ -162,10 +162,15 @@ namespace ApoioContabilidade.Trabalho.ServicesTrab
             }
             // EC 141/2026: sábado anterior (DIA3) também é DSR quando a data desse sábado for >= 15/12/2026.
             // DOMINGOTRAB_ANTERIOR passa a significar "qualquer DSR da semana anterior trabalhado".
-            if (orow["DIA3"].ToString().Trim() == "X"
-                && TDataControlTrabalho.SegundoDSRAtivo(DataSemana.AddDays(-7 + 2)))
+            // Usa orow["DATA"] (data do registro da semana anterior) em vez de DataSemana para evitar
+            // ArgumentOutOfRangeException se DataSemana ainda não tiver sido setada pelo caller.
+            if (!orow.IsNull("DIA3") && orow["DIA3"].ToString().Trim() == "X" && !orow.IsNull("DATA"))
             {
-                dataRowlst["DOMINGOTRAB_ANTERIOR"] = true;
+                DateTime dtSabadoAnterior = Convert.ToDateTime(orow["DATA"]).AddDays(2);
+                if (TDataControlTrabalho.SegundoDSRAtivo(dtSabadoAnterior))
+                {
+                    dataRowlst["DOMINGOTRAB_ANTERIOR"] = true;
+                }
             }
 
 
