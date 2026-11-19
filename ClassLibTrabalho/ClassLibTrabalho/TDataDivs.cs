@@ -149,7 +149,9 @@ namespace ClassLibTrabalho
                             {
                                 if (primeirodia_efetivo == 0)
                                     primeirodia_efetivo = j;
-                                if (((oponto.inddomingo - 1) == j) && (ocodigo.indcod == "X "))
+                                // EC 141/2026: meio expediente do sábado só vale enquanto o sábado não é o 2º DSR
+                                if (((oponto.inddomingo - 1) == j) && (ocodigo.indcod == "X ")
+                                    && !TDataControlTrabalho.SegundoDSRAtivo(oponto.semana.AddDays(j - 1)))
 
                                     horas_efetivas = horas_efetivas + (ocodigo.horas_efetivas / 2M);
                                 else

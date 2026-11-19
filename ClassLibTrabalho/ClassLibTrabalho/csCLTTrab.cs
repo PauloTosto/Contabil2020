@@ -43,6 +43,12 @@ namespace ClassLibTrabalho
         public Decimal horas_efetivas;
         public Decimal quant;
         public Decimal vlrdiaria;
+        // EC 141/2026: parte das horas extras feita em dias que já usam o divisor do fim do
+        // período. Só é diferente de zero no mês em que o divisor muda (dez/2026, dez/2027).
+        public Decimal horasfe_d2;
+        public Decimal horas50_d2;
+        public Decimal horasfeN_d2;
+        public Decimal horas50N_d2;
         public TCLTGleba()
         {
             ok = "";
@@ -429,25 +435,52 @@ namespace ClassLibTrabalho
                 return valor;
             }
         }
-        // EC 141/2026: divisor data-aware via TDataControlTrabalho.DivisorHE(fim).
-        //   até 14/12/2026: 220  |  15/12/2026+: 210  |  15/12/2027+: 200
-        private Decimal domingo_hextra(Decimal thoras, Decimal tsal)
+        // EC 141/2026: a hora extra é valorizada pelo divisor do DIA em que foi feita
+        // (TDataControlTrabalho.DivisorHE): até 15/12/2026: 220 | 16/12/2026+: 210 | 16/12/2027+: 200.
+        // Mesma conta das SPs FolhaClt_*: duas faixas só no mês em que o divisor muda.
+
+        // Divisor do início do período; se "inicio" não estiver preenchido, vale o do fim.
+        private Decimal DivisorInicioPeriodo()
+        {
+            if ((inicio == DateTime.MinValue) || (inicio > fim))
+                return TDataControlTrabalho.DivisorHE(fim);
+            return TDataControlTrabalho.DivisorHE(inicio);
+        }
+
+        // true quando a hora extra feita em "dia" pertence à segunda faixa (divisor do fim do período).
+        private bool HoraExtraNaSegundaFaixa(DateTime dia)
+        {
+            Decimal divFim = TDataControlTrabalho.DivisorHE(fim);
+            return (DivisorInicioPeriodo() != divFim) && (TDataControlTrabalho.DivisorHE(dia) == divFim);
+        }
+
+        // thoras = total de horas; thoras_d2 = parte delas feita na segunda faixa.
+        private Decimal valor_hextra(Decimal thoras, Decimal thoras_d2, Decimal tsal, Decimal fator)
+        {
+            Decimal divIni = DivisorInicioPeriodo();
+            Decimal divFim = TDataControlTrabalho.DivisorHE(fim);
+            if ((thoras_d2 == 0.0M) || (divIni == divFim))
+                return TDataControlTrabalho.ptRound((thoras * ((tsal / divIni) * fator)), 2);
+            return TDataControlTrabalho.ptRound(((thoras - thoras_d2) * ((tsal / divIni) * fator)), 2)
+                 + TDataControlTrabalho.ptRound((thoras_d2 * ((tsal / divFim) * fator)), 2);
+        }
+
+        private Decimal domingo_hextra(Decimal thoras, Decimal tsal, Decimal thoras_d2 = 0.0M)
         {
             if (thoras == 0.0M)
                 return 0.0M;
-            Decimal div = TDataControlTrabalho.DivisorHE(fim);
             if (fim < new DateTime(2011, 12, 1))
             {
+                Decimal div = TDataControlTrabalho.DivisorHE(fim);
                 return TDataControlTrabalho.ptRound((thoras * (tsal / div)), 2);
             }
-            return TDataControlTrabalho.ptRound((thoras * ((tsal / div) * 2.0M)), 2);
+            return valor_hextra(thoras, thoras_d2, tsal, 2.0M);
         }
-        private Decimal normal_hextra(Decimal thoras, Decimal tsal)
+        private Decimal normal_hextra(Decimal thoras, Decimal tsal, Decimal thoras_d2 = 0.0M)
         {
             if (thoras == 0.0M)
                 return 0.0M;
-            Decimal div = TDataControlTrabalho.DivisorHE(fim);
-            return TDataControlTrabalho.ptRound((thoras * ((tsal / div) * 1.5M)), 2);
+            return valor_hextra(thoras, thoras_d2, tsal, 1.5M);
         }
         // alterar a partir de agosto o calculo da noturno
         private Decimal noturno_hextra(Decimal thoras, Decimal tsal)
@@ -867,6 +900,10 @@ namespace ClassLibTrabalho
                 {
                     string campo = "DIA" + j.ToString().Trim();
                     if ((ponto[campo] == null) || (ponto[campo].ToString().Trim() == "")) continue;
+                    // EC 141/2026: regras que valem pela data do dia (DIA1 = quinta-feira da semana do ponto).
+                    DateTime dataDia = oponto.semana.AddDays(j - 1);
+                    bool sabadoEhDSR = TDataControlTrabalho.SegundoDSRAtivo(dataDia);
+                    bool heFaixa2 = HoraExtraNaSegundaFaixa(dataDia);
                     TCLTCodigo ocodigo = ListCodigo[ponto[campo].ToString()];
                     // DataRow orow = dtCLTCodig.Rows.Find(ponto[campo]);
                     if (ocodigo == null)
@@ -952,7 +989,8 @@ namespace ClassLibTrabalho
                         }
                         else
                         {
-                            if (((oponto.inddomingo - 1) == j) && (vet_sabado.IndexOf(ocodigo.indcod) != -1))
+                            // meio expediente do sábado: só vale enquanto o sábado não é o 2º DSR
+                            if (((oponto.inddomingo - 1) == j) && !sabadoEhDSR && (vet_sabado.IndexOf(ocodigo.indcod) != -1))
                             {
                                 codgleba.diarias = codgleba.diarias + (ocodigo.diarias * 2);
                                 DiaCodigo.diarias = DiaCodigo.diarias + (ocodigo.diarias * 2);
@@ -977,9 +1015,11 @@ namespace ClassLibTrabalho
                     if (ocodigo.horasfe > 0)
                     {
                         codgleba.horasfe = codgleba.horasfe + ocodigo.horasfe;
+                        if (heFaixa2) codgleba.horasfe_d2 = codgleba.horasfe_d2 + ocodigo.horasfe;
                         if (ponto["QUANT"].ToString() == "X")
                         {
                             codgleba.horasfeN = codgleba.horasfeN + ocodigo.horasfe;
+                            if (heFaixa2) codgleba.horasfeN_d2 = codgleba.horasfeN_d2 + ocodigo.horasfe;
                         }
                         DiaCodigo.horas_extra = DiaCodigo.horas_extra + ocodigo.horasfe;
                     }
@@ -989,8 +1029,10 @@ namespace ClassLibTrabalho
                         if (ponto["QUANT"].ToString() == "X")
                         {
                             codgleba.horas50N = codgleba.horas50N + ocodigo.horas50;
+                            if (heFaixa2) codgleba.horas50N_d2 = codgleba.horas50N_d2 + ocodigo.horas50;
                         }
                         codgleba.horas50 = codgleba.horas50 + ocodigo.horas50;
+                        if (heFaixa2) codgleba.horas50_d2 = codgleba.horas50_d2 + ocodigo.horas50;
                     }
                     if (fim < new DateTime(2011, 12, 1))
                     {
@@ -1003,7 +1045,7 @@ namespace ClassLibTrabalho
                     // horas EFETIVAMENTE TRABALHADAS
                     if (ocodigo.horas_efetivas > 0)
                     {
-                        if (((oponto.inddomingo - 1) == j) && (ocodigo.indcod == "X "))
+                        if (((oponto.inddomingo - 1) == j) && !sabadoEhDSR && (ocodigo.indcod == "X "))
                             codgleba.horas_efetivas = codgleba.horas_efetivas + (ocodigo.horas_efetivas / 2);
                         else
                             codgleba.horas_efetivas = codgleba.horas_efetivas + ocodigo.horas_efetivas;
@@ -1129,6 +1171,10 @@ namespace ClassLibTrabalho
                         vet_horas.horas50N += ogleba.horas50N;
                         vet_horas.horas100 += ogleba.horas100;
                         vet_horas.horas_efetivas += ogleba.horas_efetivas;
+                        vet_horas.horasfe_d2 += ogleba.horasfe_d2;
+                        vet_horas.horas50_d2 += ogleba.horas50_d2;
+                        vet_horas.horasfeN_d2 += ogleba.horasfeN_d2;
+                        vet_horas.horas50N_d2 += ogleba.horas50N_d2;
                     }
                 }
                 tdias = TDataControlTrabalho.ptRound((vet_horas.diarias / 8), 2);
@@ -1168,8 +1214,8 @@ namespace ClassLibTrabalho
                     //else
                       //  vet_salario.diarias = TDataControlTrabalho.ptRound(((vet_horas.diarias / 8.0M) * dia_real), 2);        // horas normais
                     vet_salario.diarias = TDataControlTrabalho.ptRound(((vet_horas.diarias / 8.0M) * dia_real), 2);
-                    vet_salario.horasfe = domingo_hextra(vet_horas.horasfe, tsal);        // horas em feriados
-                    vet_salario.horas50 = normal_hextra(vet_horas.horas50, tsal);        // horas extra 50 %
+                    vet_salario.horasfe = domingo_hextra(vet_horas.horasfe, tsal, vet_horas.horasfe_d2);        // horas em feriados
+                    vet_salario.horas50 = normal_hextra(vet_horas.horas50, tsal, vet_horas.horas50_d2);        // horas extra 50 %
 
                     if (fim < new DateTime(2011, 12, 1).Date)
                         vet_salario.horas100 = noturno_hextra(vet_horas.horas100, tsal);       // horas extra 100 %
@@ -1178,8 +1224,8 @@ namespace ClassLibTrabalho
                         if ((vet_horas.diariasN + vet_horas.horasfeN + vet_horas.horas50N) > 0)
                         {
                             vet_salario.diariasN = TDataControlTrabalho.ptRound(((vet_horas.diariasN / 8.0M) * dia_real), 2);
-                            vet_salario.horasfeN = domingo_hextra(vet_horas.horasfeN, tsal);        // horas em feriados
-                            vet_salario.horas50N = normal_hextra(vet_horas.horas50N, tsal);        // horas extra 50 %
+                            vet_salario.horasfeN = domingo_hextra(vet_horas.horasfeN, tsal, vet_horas.horasfeN_d2);        // horas em feriados
+                            vet_salario.horas50N = normal_hextra(vet_horas.horas50N, tsal, vet_horas.horas50N_d2);        // horas extra 50 %
                             vet_salario.horas100 = TDataControlTrabalho.ptRound(((vet_salario.diariasN + vet_salario.horasfeN + vet_salario.horas50N) * 0.25M), 2);
                         }
                     }
@@ -1320,8 +1366,8 @@ namespace ClassLibTrabalho
                     vet_horas.quant += ogleba.quant;
                     if (ogleba.vlrdiaria == 0.00M) ogleba.vlrdiaria = dia_real;
                     vet_salario.diarias += TDataControlTrabalho.ptRound(((ogleba.diarias / 8) * ogleba.vlrdiaria), 2);        // horas normais
-                    vet_salario.horasfe += domingo_hextra(ogleba.horasfe, tsal);        // horas em feriados
-                    vet_salario.horas50 += normal_hextra(ogleba.horas50, tsal);        // horas extra 50 %
+                    vet_salario.horasfe += domingo_hextra(ogleba.horasfe, tsal, ogleba.horasfe_d2);        // horas em feriados
+                    vet_salario.horas50 += normal_hextra(ogleba.horas50, tsal, ogleba.horas50_d2);        // horas extra 50 %
                     //vet_salario.horas100 += noturno_hextra(ogleba.horas100, tsal);       // horas extra 100 %
                     if (fim < new DateTime(2011, 12, 1).Date)
                         vet_salario.horas100 += noturno_hextra(ogleba.horas100, tsal);       // horas extra 100 %
@@ -1330,8 +1376,8 @@ namespace ClassLibTrabalho
                         if ((ogleba.diariasN + ogleba.horasfeN + ogleba.horas50N) > 0)
                         {
                             vet_salario.diariasN = TDataControlTrabalho.ptRound(((ogleba.diariasN / 8.0M) * dia_real), 2);
-                            vet_salario.horasfeN = domingo_hextra(ogleba.horasfeN, tsal);        // horas em feriados
-                            vet_salario.horas50N = normal_hextra(ogleba.horas50N, tsal);        // horas extra 50 %
+                            vet_salario.horasfeN = domingo_hextra(ogleba.horasfeN, tsal, ogleba.horasfeN_d2);        // horas em feriados
+                            vet_salario.horas50N = normal_hextra(ogleba.horas50N, tsal, ogleba.horas50N_d2);        // horas extra 50 %
                             vet_salario.horas100 += TDataControlTrabalho.ptRound(((vet_salario.diariasN + vet_salario.horasfeN + vet_salario.horas50N) * 0.25M), 2);
                         }
                     }
@@ -1586,6 +1632,10 @@ namespace ClassLibTrabalho
                         vet_horas.horas50N += ogleba.horas50N;
                         vet_horas.horas100 += ogleba.horas100;
                         vet_horas.horas_efetivas += ogleba.horas_efetivas;
+                        vet_horas.horasfe_d2 += ogleba.horasfe_d2;
+                        vet_horas.horas50_d2 += ogleba.horas50_d2;
+                        vet_horas.horasfeN_d2 += ogleba.horasfeN_d2;
+                        vet_horas.horas50N_d2 += ogleba.horas50N_d2;
                     }
                 }
                 tdias = TDataControlTrabalho.ptRound((vet_horas.diarias / 8), 2);
@@ -1626,8 +1676,8 @@ namespace ClassLibTrabalho
                         vet_salario.diarias = TDataControlTrabalho.ptRound(((vet_horas.diarias / 8.0M) * dia_real), 2);
                    // else
                      //   vet_salario.diarias = TDataControlTrabalho.ptRound(((vet_horas.diarias / 8.0M) * dia_real), 2);        // horas normais
-                    vet_salario.horasfe = domingo_hextra(vet_horas.horasfe, tsal);        // horas em feriados
-                    vet_salario.horas50 = normal_hextra(vet_horas.horas50, tsal);        // horas extra 50 %
+                    vet_salario.horasfe = domingo_hextra(vet_horas.horasfe, tsal, vet_horas.horasfe_d2);        // horas em feriados
+                    vet_salario.horas50 = normal_hextra(vet_horas.horas50, tsal, vet_horas.horas50_d2);        // horas extra 50 %
                     if (fim < new DateTime(2011, 12, 1))
                         vet_salario.horas100 = noturno_hextra(vet_horas.horas100, tsal);       // horas extra 100 %
                     else
@@ -1635,8 +1685,8 @@ namespace ClassLibTrabalho
                         if ((vet_horas.diariasN + vet_horas.horasfeN + vet_horas.horas50N) > 0)
                         {
                             vet_salario.diariasN = TDataControlTrabalho.ptRound(((vet_horas.diariasN / 8.0M) * dia_real), 2);
-                            vet_salario.horasfeN = domingo_hextra(vet_horas.horasfeN, tsal);        // horas em feriados
-                            vet_salario.horas50N = normal_hextra(vet_horas.horas50N, tsal);        // horas extra 50 %
+                            vet_salario.horasfeN = domingo_hextra(vet_horas.horasfeN, tsal, vet_horas.horasfeN_d2);        // horas em feriados
+                            vet_salario.horas50N = normal_hextra(vet_horas.horas50N, tsal, vet_horas.horas50N_d2);        // horas extra 50 %
                             vet_salario.horas100 = TDataControlTrabalho.ptRound(((vet_salario.diariasN + vet_salario.horasfeN + vet_salario.horas50N) * 0.25M), 2);
                         }
                     }

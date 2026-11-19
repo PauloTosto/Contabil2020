@@ -1311,23 +1311,25 @@ namespace ClassLibTrabalho
         // Manter as três cópias sincronizadas: mesmas datas, mesmos valores.
         // =====================================================================
 
-        // Divisor mensalista para hora extra.
-        //   fim < 01/12/2011  -> 240 (ramo pré-2011, preservado)
-        //   fim < 15/12/2026  -> 220 (44h/sem)
-        //   fim < 15/12/2027  -> 210 (42h/sem, 5x2 fase 1)
-        //   fim >= 15/12/2027 -> 200 (40h/sem, regime final)
-        static public decimal DivisorHE(DateTime fim)
+        // Divisor mensalista para hora extra, pela data do DIA em que a hora foi feita.
+        //   dia < 01/12/2011  -> 240 (ramo pré-2011, preservado)
+        //   dia < 16/12/2026  -> 220 (44h/sem)
+        //   dia < 16/12/2027  -> 210 (42h/sem, 5x2 fase 1)
+        //   dia >= 16/12/2027 -> 200 (40h/sem, regime final)
+        // No mês em que o divisor muda (dez/2026, dez/2027) as horas de 1 a 15 saem pelo
+        // divisor anterior e as de 16 em diante pelo novo.
+        static public decimal DivisorHE(DateTime dia)
         {
-            if (fim < new DateTime(2011, 12, 1)) return 240.0M;
-            if (fim < new DateTime(2026, 12, 15)) return 220.0M;
-            if (fim < new DateTime(2027, 12, 15)) return 210.0M;
+            if (dia < new DateTime(2011, 12, 1)) return 240.0M;
+            if (dia < new DateTime(2026, 12, 16)) return 220.0M;
+            if (dia < new DateTime(2027, 12, 16)) return 210.0M;
             return 200.0M;
         }
 
-        // Sábado passa a ser 2º DSR a partir de 15/12/2026.
-        static public bool SegundoDSRAtivo(DateTime fim)
+        // Sábado passa a ser 2º DSR a partir de 16/12/2026 (o primeiro é 19/12/2026).
+        static public bool SegundoDSRAtivo(DateTime dia)
         {
-            return fim >= new DateTime(2026, 12, 15);
+            return dia >= new DateTime(2026, 12, 16);
         }
 
         static public decimal CalcSalarioMinimo(DateTime data, DataTable SalarioMinimo)
